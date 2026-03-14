@@ -17,9 +17,78 @@ const vehicleEmojiPool = [
   "🚛", "🚐", "🚎", "🚍", "🚘", "🛺", "🚔", "🛻"
 ];
 
+const dinoEmojiPool = [
+  "🦖", "🦕", "🐉", "🐲", "🥚", "🌋", "🦴", "⭐", "✨", "🌈", "☄️", "🪨"
+];
+
+const spaceEmojiPool = [
+  "🚀", "🛸", "🪐", "⭐", "🌟", "✨", "☀️", "🌙", "☁️", "☄️", "🌌", "👨‍🚀"
+];
+
+const seaEmojiPool = [
+  "🐠", "🐟", "🐬", "🐳", "🐋", "🐙", "🦀", "🦑", "🪼", "🐚", "🌊", "⛵"
+];
+
+const farmEmojiPool = [
+  "🐮", "🐷", "🐔", "🐓", "🐣", "🐥", "🐴", "🐑", "🐐", "🚜", "🌽", "🍎"
+];
+
+const insectEmojiPool = [
+  "🦋", "🐞", "🐝", "🪲", "🐛", "🪱", "🦗", "🕷️", "🕸️", "🌼", "🍃", "✨"
+];
+
+const partyEmojiPool = [
+  "🎉", "🎈", "🫧", "🎊", "🥳", "🎵", "🎶", "⭐", "✨", "🌈", "💛", "🧡"
+];
+
+const colorEmojiPool = [
+  "🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "🩷", "🤍", "🌈", "🎨", "🖍️", "✨"
+];
+
+const fruitEmojiPool = [
+  "🍓", "🍒", "🍉", "🍌", "🍊", "🍍", "🥝", "🫐", "🍎", "🍐", "🍇", "🥭"
+];
+
+const magicEmojiPool = [
+  "🪄", "✨", "💫", "⭐", "🌙", "🔮", "🦄", "👑", "🏰", "🧚", "💖", "🌈"
+];
+
+const skyEmojiPool = [
+  "☀️", "🌙", "⭐", "🌟", "☁️", "🌤️", "⛅", "🌈", "🪁", "🦅", "🕊️", "💨"
+];
+
+const friendlyMonsterEmojiPool = [
+  "👾", "🤖", "👻", "😸", "🐲", "🦖", "🦕", "💚", "🩵", "⭐", "🫧", "✨"
+];
+
+const princessEmojiPool = [
+  "👑", "👸", "🦄", "🐱", "🐰", "🦋", "🌸", "🌼", "🪻", "🌈", "✨", "⭐",
+  "💖", "💗", "💝", "🎀", "🩷", "💜", "🎈", "🫧", "🍓", "🍒", "🩰", "🧁",
+  "🍭", "🧸", "🐶", "🐥", "🦩", "🪄", "🌙", "🏰"
+];
+
+const adventureEmojiPool = [
+  "🚗", "🚙", "🏎️", "🛵", "🚲", "🚜", "🚂", "🚀", "🛸", "✈️", "🚁", "🚚",
+  "🚛", "🛻", "🚌", "🚓", "🚒", "🦖", "🦕", "🐉", "🦁", "🐯", "🦊", "🐻",
+  "⚽", "🏀", "⭐", "💥", "🔵", "🟢", "🛡️", "🏁"
+];
+
 const randomEmojiPool = [
   ...animalEmojiPool,
   ...vehicleEmojiPool,
+  ...dinoEmojiPool,
+  ...spaceEmojiPool,
+  ...seaEmojiPool,
+  ...farmEmojiPool,
+  ...insectEmojiPool,
+  ...partyEmojiPool,
+  ...colorEmojiPool,
+  ...fruitEmojiPool,
+  ...magicEmojiPool,
+  ...skyEmojiPool,
+  ...friendlyMonsterEmojiPool,
+  ...princessEmojiPool,
+  ...adventureEmojiPool,
   "🌸", "🌼", "🪻", "🍀", "🍓", "🍉", "🍌", "🍊", "🍍", "🥝", "🍒", "🫐",
   "🎈", "🫧", "🎉", "❤️", "💛", "🧡", "🪐"
 ];
@@ -40,7 +109,8 @@ const menuScreen = document.getElementById("menuScreen");
 const playButton = document.getElementById("playButton");
 const gamepadStatus = document.getElementById("gamepadStatus");
 const gamepadCursor = document.getElementById("gamepadCursor");
-const gameCountValue = document.getElementById("gameCountValue");
+const sessionTimer = document.getElementById("sessionTimer");
+const endingScreen = document.getElementById("endingScreen");
 const hint = document.getElementById("hint");
 const optionButtons = Array.from(document.querySelectorAll(".option-button"));
 const menuFocusables = [...optionButtons, playButton];
@@ -49,10 +119,16 @@ let burstCount = 0;
 const heldKeys = new Map();
 let primeTimeouts = [];
 let animationFrameId = null;
+let sessionTimerTimeoutId = null;
+let sessionTimerIntervalId = null;
+let endingTimeoutId = null;
 const state = {
   isPlaying: false,
   speedMode: "normal",
-  emojiMode: "random"
+  emojiMode: "all",
+  timerMode: "10",
+  sessionEndsAt: null,
+  isEnding: false
 };
 const gamepadState = {
   activeIndex: null,
@@ -74,19 +150,16 @@ const gamepadState = {
   }
 };
 const menuGrid = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6]
+  [0, 1, 2, 3],
+  [4, 5, 6],
+  [7],
+  [8]
 ];
 const gamepadConfig = {
   deadzone: 0.24,
   moveSpeed: 15,
   menuMoveCooldown: 170
 };
-const storageKeys = {
-  totalGames: "tap-tap-emojis-total-games"
-};
-
 function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
@@ -100,11 +173,35 @@ function getCurrentEmojiPool() {
     return vehicleEmojiPool;
   }
 
+  if (state.emojiMode === "dinos") {
+    return dinoEmojiPool;
+  }
+
+  if (state.emojiMode === "space") {
+    return spaceEmojiPool;
+  }
+
+  if (state.emojiMode === "princess") {
+    return princessEmojiPool;
+  }
+
+  if (state.emojiMode === "adventure") {
+    return adventureEmojiPool;
+  }
+
   return randomEmojiPool;
 }
 
 function getSpeedSetting() {
   return speedSettings[state.speedMode];
+}
+
+function getTimerDurationMs() {
+  if (state.timerMode === "off") {
+    return null;
+  }
+
+  return Number.parseInt(state.timerMode, 10) * 60 * 1000;
 }
 
 function applyRandomTheme() {
@@ -204,30 +301,36 @@ function clearPrimeTimeouts() {
   primeTimeouts = [];
 }
 
-function getStoredGameCount() {
-  try {
-    const rawValue = window.localStorage.getItem(storageKeys.totalGames);
-    const parsedValue = Number.parseInt(rawValue ?? "0", 10);
-    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : 0;
-  } catch (error) {
-    return 0;
-  }
-}
-
-function updateGameCountLabel(count) {
-  gameCountValue.textContent = String(count);
-}
-
-function incrementGameCount() {
-  const nextCount = getStoredGameCount() + 1;
-
-  try {
-    window.localStorage.setItem(storageKeys.totalGames, String(nextCount));
-  } catch (error) {
-    // Ignore storage failures and still reflect the current session's increment.
+function clearSessionTimer() {
+  if (sessionTimerTimeoutId) {
+    window.clearTimeout(sessionTimerTimeoutId);
+    sessionTimerTimeoutId = null;
   }
 
-  updateGameCountLabel(nextCount);
+  if (sessionTimerIntervalId) {
+    window.clearInterval(sessionTimerIntervalId);
+    sessionTimerIntervalId = null;
+  }
+
+  state.sessionEndsAt = null;
+  sessionTimer.textContent = "";
+  playground.classList.remove("has-timer");
+}
+
+function formatRemainingTime(remainingMs) {
+  const totalSeconds = Math.max(Math.ceil(remainingMs / 1000), 0);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function updateSessionTimerLabel() {
+  if (!state.sessionEndsAt) {
+    sessionTimer.textContent = "";
+    return;
+  }
+
+  sessionTimer.textContent = formatRemainingTime(state.sessionEndsAt - Date.now());
 }
 
 function clamp(value, min, max) {
@@ -255,6 +358,11 @@ function stopGamepadSpawn() {
     window.clearInterval(gamepadState.spawnIntervalId);
     gamepadState.spawnIntervalId = null;
   }
+}
+
+function stopAllInteractiveInput() {
+  releaseAllKeys();
+  stopGamepadSpawn();
 }
 
 function triggerGamepadBurst() {
@@ -328,8 +436,8 @@ function activateFocusedMenuItem() {
 }
 
 function setMenuFocusForState() {
-  const speedIndexMap = { slow: 0, normal: 1, fast: 2 };
-  gamepadState.menuFocusIndex = speedIndexMap[state.speedMode] ?? menuFocusables.length - 1;
+  const timerIndexMap = { "5": 0, "10": 1, "15": 2, off: 3 };
+  gamepadState.menuFocusIndex = timerIndexMap[state.timerMode] ?? menuFocusables.length - 1;
   updateMenuFocus();
 }
 
@@ -525,7 +633,7 @@ function syncOptionButtons() {
     const group = button.dataset.group;
     const value = button.dataset.value;
     const isActive =
-      (group === "speed" && value === state.speedMode) ||
+      (group === "timer" && value === state.timerMode) ||
       (group === "emoji" && value === state.emojiMode);
 
     button.classList.toggle("is-active", isActive);
@@ -535,25 +643,75 @@ function syncOptionButtons() {
 
 function showMenu() {
   state.isPlaying = false;
+  state.isEnding = false;
   releaseAllKeys();
   clearPrimeTimeouts();
+  clearSessionTimer();
+  if (endingTimeoutId) {
+    window.clearTimeout(endingTimeoutId);
+    endingTimeoutId = null;
+  }
   resetHint();
   clearBursts();
   playground.classList.remove("is-playing");
+  playground.classList.remove("is-ending");
   menuScreen.removeAttribute("hidden");
   setMenuFocusForState();
 }
 
+function endSessionSoftly() {
+  if (!state.isPlaying || state.isEnding) {
+    return;
+  }
+
+  state.isEnding = true;
+  clearPrimeTimeouts();
+  clearSessionTimer();
+  stopAllInteractiveInput();
+  playground.classList.add("is-ending");
+  endingScreen.removeAttribute("aria-hidden");
+
+  endingTimeoutId = window.setTimeout(() => {
+    endingTimeoutId = null;
+    endingScreen.setAttribute("aria-hidden", "true");
+    showMenu();
+  }, 2600);
+}
+
+function startSessionTimer() {
+  const durationMs = getTimerDurationMs();
+  clearSessionTimer();
+
+  if (!durationMs) {
+    return;
+  }
+
+  state.sessionEndsAt = Date.now() + durationMs;
+  playground.classList.add("has-timer");
+  updateSessionTimerLabel();
+
+  sessionTimerIntervalId = window.setInterval(() => {
+    updateSessionTimerLabel();
+  }, 1000);
+
+  sessionTimerTimeoutId = window.setTimeout(() => {
+    endSessionSoftly();
+  }, durationMs);
+}
+
 function startGame() {
-  incrementGameCount();
   state.isPlaying = true;
+  state.isEnding = false;
   applyRandomTheme();
   clearPrimeTimeouts();
   clearBursts();
   resetHint();
   playground.classList.add("is-playing");
+  playground.classList.remove("is-ending");
   menuScreen.setAttribute("hidden", "hidden");
+  endingScreen.setAttribute("aria-hidden", "true");
   resetGamepadCursor();
+  startSessionTimer();
   primeFirstView();
 }
 
@@ -564,8 +722,8 @@ function handleOptionClick(event) {
   }
 
   const { group, value } = button.dataset;
-  if (group === "speed") {
-    state.speedMode = value;
+  if (group === "timer") {
+    state.timerMode = value;
   }
 
   if (group === "emoji") {
@@ -623,7 +781,6 @@ function handleGamepadDisconnected(event) {
 applyRandomTheme();
 syncOptionButtons();
 showMenu();
-updateGameCountLabel(getStoredGameCount());
 setGamepadStatusLabel();
 resetGamepadCursor();
 updateMenuFocus();

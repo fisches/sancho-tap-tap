@@ -32,29 +32,27 @@
 
       <section class="menu-screen" id="menuScreen" aria-label="Menu de demarrage">
         <div class="menu-card">
-          <p class="menu-kicker">sancho tap tap</p>
           <h1 class="menu-title">sancho tap tap</h1>
           <p class="menu-pitch">
-            Un petit jeu tout simple pour les tout-petits. On tape, on appuie, et des emojis
+            Un petit jeu tout simple. On tape, on appuie, et des emojis
             rigolos apparaissent partout avec de jolies animations.
-          </p>
-          <p class="menu-audience">Pense pour un enfant autour de 2 ans, en tactile ou au clavier avec un parent.</p>
-          <p class="menu-stats">
-            parties jouees ici: <strong id="gameCountValue">0</strong>
           </p>
 
           <div class="menu-groups">
-            <section class="option-group" aria-labelledby="speedTitle">
-              <p class="option-title" id="speedTitle">vitesse</p>
-              <div class="option-row" id="speedOptions">
-                <button class="option-button" type="button" data-group="speed" data-value="slow">
-                  slow
+            <section class="option-group" aria-labelledby="timerTitle">
+              <p class="option-title" id="timerTitle">minuteur</p>
+              <div class="option-row option-row-timer" id="timerOptions">
+                <button class="option-button" type="button" data-group="timer" data-value="5">
+                  5 min
                 </button>
-                <button class="option-button is-active" type="button" data-group="speed" data-value="normal">
-                  normal
+                <button class="option-button is-active" type="button" data-group="timer" data-value="10">
+                  10 min
                 </button>
-                <button class="option-button" type="button" data-group="speed" data-value="fast">
-                  fast
+                <button class="option-button" type="button" data-group="timer" data-value="15">
+                  15 min
+                </button>
+                <button class="option-button" type="button" data-group="timer" data-value="off">
+                  infini
                 </button>
               </div>
             </section>
@@ -65,11 +63,16 @@
                 <button class="option-button" type="button" data-group="emoji" data-value="animals">
                   animaux
                 </button>
-                <button class="option-button" type="button" data-group="emoji" data-value="vehicles">
-                  vehicules
+                <button class="option-button" type="button" data-group="emoji" data-value="princess">
+                  princesse
                 </button>
-                <button class="option-button is-active" type="button" data-group="emoji" data-value="random">
-                  aleatoire
+                <button class="option-button" type="button" data-group="emoji" data-value="adventure">
+                  aventure
+                </button>
+              </div>
+              <div class="option-row option-row-featured">
+                <button class="option-button option-button-featured is-active" type="button" data-group="emoji" data-value="all">
+                  tous
                 </button>
               </div>
             </section>
@@ -79,6 +82,13 @@
         </div>
       </section>
 
+      <div class="session-timer" id="sessionTimer" aria-hidden="true"></div>
+      <div class="ending-screen" id="endingScreen" aria-hidden="true">
+        <div class="ending-card">
+          <p class="ending-title">petite pause</p>
+          <p class="ending-text">la partie se termine tranquillement</p>
+        </div>
+      </div>
       <div class="hint" id="hint" aria-hidden="true">sancho tap tap</div>
       <div class="gamepad-cursor" id="gamepadCursor" aria-hidden="true"></div>
       <div class="emoji-stage" id="emojiStage" aria-hidden="true"></div>
