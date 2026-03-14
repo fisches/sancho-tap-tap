@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f6f3ea" />
+    <title>Sancho Tap Tap</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="playground theme-sky" id="playground" aria-label="Zone de jeu tactile">
+      <div class="background-layer">
+        <div class="shape shape-a"></div>
+        <div class="shape shape-b"></div>
+        <div class="shape shape-c"></div>
+        <div class="shape shape-d"></div>
+        <div class="pattern"></div>
+      </div>
+
+      <div class="hud">
+        <div id="gamepadStatus" class="gamepad-status" aria-live="polite">manette inactive</div>
+        <button id="menuButton" class="menu-button" type="button" aria-label="Retour au menu">
+          menu
+        </button>
+        <button id="fullscreenButton" class="fullscreen-button" type="button" aria-label="Plein ecran">
+          plein ecran
+        </button>
+      </div>
+
+      <section class="menu-screen" id="menuScreen" aria-label="Menu de demarrage">
+        <div class="menu-card">
+          <p class="menu-kicker">sancho tap tap</p>
+          <h1 class="menu-title">sancho tap tap</h1>
+          <p class="menu-pitch">
+            Un petit jeu tout simple pour les tout-petits. On tape, on appuie, et des emojis
+            rigolos apparaissent partout avec de jolies animations.
+          </p>
+          <p class="menu-audience">Pense pour un enfant autour de 2 ans, en tactile ou au clavier avec un parent.</p>
+          <p class="menu-stats">
+            parties jouees ici: <strong id="gameCountValue">0</strong>
+          </p>
+
+          <div class="menu-groups">
+            <section class="option-group" aria-labelledby="speedTitle">
+              <p class="option-title" id="speedTitle">vitesse</p>
+              <div class="option-row" id="speedOptions">
+                <button class="option-button" type="button" data-group="speed" data-value="slow">
+                  slow
+                </button>
+                <button class="option-button is-active" type="button" data-group="speed" data-value="normal">
+                  normal
+                </button>
+                <button class="option-button" type="button" data-group="speed" data-value="fast">
+                  fast
+                </button>
+              </div>
+            </section>
+
+            <section class="option-group" aria-labelledby="emojiTitle">
+              <p class="option-title" id="emojiTitle">emojis</p>
+              <div class="option-row" id="emojiOptions">
+                <button class="option-button" type="button" data-group="emoji" data-value="animals">
+                  animaux
+                </button>
+                <button class="option-button" type="button" data-group="emoji" data-value="vehicles">
+                  vehicules
+                </button>
+                <button class="option-button is-active" type="button" data-group="emoji" data-value="random">
+                  aleatoire
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <button id="playButton" class="play-button" type="button">jouer</button>
+        </div>
+      </section>
+
+      <div class="hint" id="hint" aria-hidden="true">sancho tap tap</div>
+      <div class="gamepad-cursor" id="gamepadCursor" aria-hidden="true"></div>
+      <div class="emoji-stage" id="emojiStage" aria-hidden="true"></div>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
