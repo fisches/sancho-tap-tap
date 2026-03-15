@@ -496,30 +496,7 @@ button {
 }
 
 .gamepad-cursor {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 3;
-  width: 2.8rem;
-  height: 2.8rem;
-  margin-left: -1.4rem;
-  margin-top: -1.4rem;
-  border-radius: 50%;
-  border: 0.22rem solid rgba(255, 255, 255, 0.95);
-  box-shadow:
-    0 0 0 0.35rem rgba(255, 157, 118, 0.26),
-    0 10px 22px rgba(36, 64, 75, 0.16);
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.96) 0 20%, rgba(255, 157, 118, 0.82) 22% 56%, transparent 58%);
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(0.72);
-  transition: opacity 140ms ease, transform 140ms ease;
-}
-
-.playground.is-playing.has-gamepad .gamepad-cursor {
-  opacity: 1;
-  transform: scale(1);
+  display: none;
 }
 
 .emoji-stage {

@@ -365,9 +365,14 @@ function stopAllInteractiveInput() {
   stopGamepadSpawn();
 }
 
+function isGamepadBurstPressed(gamepad) {
+  return gamepad.buttons.some((button, index) => index !== 8 && index !== 9 && button?.pressed);
+}
+
 function triggerGamepadBurst() {
+  const point = nextKeyboardPoint();
   hideHint();
-  spawnBurst(gamepadState.cursorX, gamepadState.cursorY);
+  spawnBurst(point.x, point.y);
 }
 
 function startGamepadSpawn() {
@@ -465,24 +470,7 @@ function handleGamepadMenuNavigation(horizontal, vertical, primaryPressed) {
 }
 
 function handleGamepadGameplay(gamepad) {
-  const horizontal = Math.abs(gamepad.axes[0] || 0) > gamepadConfig.deadzone ? gamepad.axes[0] : 0;
-  const vertical = Math.abs(gamepad.axes[1] || 0) > gamepadConfig.deadzone ? gamepad.axes[1] : 0;
-  const marginX = Math.max(window.innerWidth * 0.08, 48);
-  const marginY = Math.max(window.innerHeight * 0.1, 56);
-
-  gamepadState.cursorX = clamp(
-    gamepadState.cursorX + horizontal * gamepadConfig.moveSpeed,
-    marginX,
-    window.innerWidth - marginX
-  );
-  gamepadState.cursorY = clamp(
-    gamepadState.cursorY + vertical * gamepadConfig.moveSpeed,
-    marginY,
-    window.innerHeight - marginY
-  );
-  updateGamepadCursor();
-
-  const primaryPressed = Boolean(gamepad.buttons[0]?.pressed || gamepad.buttons[2]?.pressed);
+  const primaryPressed = isGamepadBurstPressed(gamepad);
   const menuPressed = Boolean(gamepad.buttons[9]?.pressed || gamepad.buttons[8]?.pressed);
 
   if (primaryPressed && !gamepadState.previousButtons.primary) {
