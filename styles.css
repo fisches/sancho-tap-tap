@@ -50,6 +50,10 @@ button {
     linear-gradient(180deg, var(--bg-2), var(--bg-1) 55%, var(--bg-3));
 }
 
+.playground.is-low-power {
+  --shape-opacity: 0.56;
+}
+
 .background-layer,
 .emoji-stage,
 .hud,
@@ -71,6 +75,10 @@ button {
 .shape {
   opacity: var(--shape-opacity);
   filter: blur(0.5px);
+}
+
+.playground.is-low-power .shape {
+  filter: none;
 }
 
 .shape-a {
@@ -191,7 +199,7 @@ button {
   pointer-events: none;
 }
 
-.menu-button,
+.parent-hotspot,
 .fullscreen-button {
   position: absolute;
   top: max(1rem, env(safe-area-inset-top));
@@ -208,6 +216,17 @@ button {
   box-shadow: 0 12px 30px rgba(57, 83, 95, 0.08);
   opacity: 0.34;
   transition: opacity 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.parent-hotspot {
+  left: max(0.85rem, env(safe-area-inset-left));
+  top: auto;
+  bottom: max(0.85rem, env(safe-area-inset-bottom));
+  padding: 0.5rem 0.72rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  opacity: 0;
+  transform: scale(0.94);
 }
 
 .gamepad-status {
@@ -231,17 +250,17 @@ button {
   opacity: 0.52;
 }
 
-.menu-button {
-  left: max(1rem, env(safe-area-inset-left));
-  display: none;
-}
-
 .fullscreen-button {
   right: max(1rem, env(safe-area-inset-right));
 }
 
-.playground.is-playing .menu-button {
-  display: inline-flex;
+.playground.is-playing .parent-hotspot {
+  opacity: 0.26;
+  transform: scale(1);
+}
+
+.playground.is-playing .fullscreen-button {
+  display: none;
 }
 
 .playground.has-gamepad .gamepad-status {
@@ -250,8 +269,19 @@ button {
   opacity: 0.94;
 }
 
-.menu-button:hover,
-.menu-button:focus-visible,
+.playground.is-low-power .parent-hotspot,
+.playground.is-low-power .fullscreen-button,
+.playground.is-low-power .gamepad-status,
+.playground.is-low-power .session-timer,
+.playground.is-low-power .menu-screen,
+.playground.is-low-power .ending-screen,
+.playground.is-low-power .resume-screen,
+.playground.is-low-power .parent-screen {
+  backdrop-filter: none;
+}
+
+.parent-hotspot:hover,
+.parent-hotspot:focus-visible,
 .fullscreen-button:hover,
 .fullscreen-button:focus-visible {
   opacity: 0.9;
@@ -388,6 +418,20 @@ button {
   color: rgba(36, 64, 75, 0.8);
 }
 
+.menu-parent-note {
+  margin: 0.95rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.54);
+  color: rgba(36, 64, 75, 0.74);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.menu-parent-note strong {
+  color: rgba(36, 64, 75, 0.92);
+}
+
 .menu-audience {
   margin-top: 0.9rem;
   font-size: 0.98rem;
@@ -487,16 +531,126 @@ button {
   animation: playPulse 2.8s ease-in-out infinite;
 }
 
+.resume-screen,
+.parent-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background:
+    linear-gradient(180deg, rgba(242, 248, 252, 0.26), rgba(255, 247, 239, 0.38)),
+    rgba(245, 240, 231, 0.36);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.playground.is-paused .resume-screen,
+.playground.is-parent-open .parent-screen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.resume-card,
+.parent-card {
+  width: min(25rem, 100%);
+  padding: 1.35rem;
+  border-radius: 1.75rem;
+  background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow: 0 24px 50px rgba(42, 66, 79, 0.14);
+  text-align: center;
+}
+
+.resume-kicker,
+.parent-kicker,
+.resume-title,
+.parent-title,
+.resume-text,
+.parent-text {
+  margin: 0;
+}
+
+.resume-kicker,
+.parent-kicker {
+  font-size: 0.73rem;
+  letter-spacing: 0.18em;
+  text-transform: lowercase;
+  color: rgba(36, 64, 75, 0.48);
+}
+
+.resume-title,
+.parent-title {
+  margin-top: 0.45rem;
+  font-size: 1.45rem;
+  line-height: 1;
+  color: rgba(36, 64, 75, 0.92);
+}
+
+.resume-text,
+.parent-text {
+  margin-top: 0.65rem;
+  color: rgba(36, 64, 75, 0.68);
+  line-height: 1.5;
+}
+
+.resume-actions,
+.parent-actions {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.resume-menu-button,
+.resume-button,
+.parent-action {
+  border: 0;
+  border-radius: 1.2rem;
+  min-height: 3.3rem;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.resume-button,
+.parent-action {
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: #fff9f4;
+  box-shadow: 0 16px 30px rgba(255, 127, 91, 0.22);
+}
+
+.resume-menu-button,
+.parent-action-soft {
+  background: rgba(255, 255, 255, 0.82);
+  color: rgba(36, 64, 75, 0.86);
+}
+
+.resume-button.is-focused,
+.parent-action.is-focused,
+.resume-menu-button.is-focused {
+  outline: 0.22rem solid rgba(36, 64, 75, 0.24);
+  outline-offset: 0.16rem;
+}
+
 .playground.is-playing .hint {
   display: grid;
 }
 
-.playground:not(.is-playing) .hint {
+.playground:not(.is-playing) .hint,
+.playground.is-paused .hint,
+.playground.is-parent-open .hint {
   display: none;
 }
 
 .gamepad-cursor {
   display: none;
+}
+
+.playground.is-low-power .emoji {
+  will-change: auto;
 }
 
 .emoji-stage {
@@ -516,15 +670,20 @@ button {
   left: 0;
   top: 0;
   transform: translate(-50%, -50%) scale(0.25);
-  font-size: clamp(3rem, 10vmin, 6.8rem);
-  line-height: 1;
-  filter: drop-shadow(0 8px 16px var(--shadow));
+  width: clamp(3.25rem, 10vmin, 7rem);
+  height: clamp(3.25rem, 10vmin, 7rem);
   animation: popEmoji 2700ms cubic-bezier(0.2, 1, 0.28, 1) forwards;
   will-change: transform, opacity;
 }
 
+.emoji-image {
+  display: block;
+  object-fit: contain;
+}
+
 .emoji.sparkle {
-  font-size: clamp(1.4rem, 3vmin, 2rem);
+  width: clamp(1.3rem, 3.2vmin, 2rem);
+  height: clamp(1.3rem, 3.2vmin, 2rem);
   animation: orbitSpark 900ms ease-out forwards;
 }
 
@@ -539,6 +698,10 @@ button {
   border-radius: 50%;
   border: 0.35rem solid rgba(255, 255, 255, 0.48);
   animation: pulseRing 620ms ease-out forwards;
+}
+
+.playground.is-low-power .ring {
+  display: none;
 }
 
 @keyframes popEmoji {
@@ -644,6 +807,13 @@ button {
     display: none;
   }
 
+  .menu-parent-note {
+    margin-top: 0.7rem;
+    padding: 0.72rem 0.8rem;
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
   .menu-groups {
     display: grid;
     grid-template-columns: 1fr;
@@ -736,10 +906,17 @@ button {
       0 -10px 20px rgba(255, 251, 246, 0.98);
   }
 
-  .menu-button,
+  .parent-hotspot,
   .fullscreen-button {
     font-size: 0.72rem;
     padding: 0.62rem 0.78rem;
+  }
+
+  .parent-hotspot {
+    bottom: max(0.55rem, env(safe-area-inset-bottom));
+    left: max(0.55rem, env(safe-area-inset-left));
+    padding: 0.42rem 0.6rem;
+    font-size: 0.58rem;
   }
 
   .gamepad-status {
@@ -772,6 +949,31 @@ button {
 
   .ending-text {
     font-size: 0.82rem;
+  }
+
+  .resume-card,
+  .parent-card {
+    width: min(20rem, 100%);
+    padding: 1.05rem 0.95rem;
+    border-radius: 1.3rem;
+  }
+
+  .resume-title,
+  .parent-title {
+    font-size: 1.18rem;
+  }
+
+  .resume-text,
+  .parent-text {
+    font-size: 0.84rem;
+  }
+
+  .resume-menu-button,
+  .resume-button,
+  .parent-action {
+    min-height: 3rem;
+    border-radius: 1rem;
+    font-size: 0.88rem;
   }
 
   .shape-b {

@@ -22,8 +22,8 @@
 
       <div class="hud">
         <div id="gamepadStatus" class="gamepad-status" aria-live="polite">manette inactive</div>
-        <button id="menuButton" class="menu-button" type="button" aria-label="Retour au menu">
-          menu
+        <button id="parentHotspot" class="parent-hotspot" type="button" aria-label="Options parent">
+          parent
         </button>
         <button id="fullscreenButton" class="fullscreen-button" type="button" aria-label="Plein ecran">
           plein ecran
@@ -36,6 +36,10 @@
           <p class="menu-pitch">
             Un petit jeu tout simple. On tape, on appuie, et des emojis
             rigolos apparaissent partout avec de jolies animations.
+          </p>
+          <p class="menu-parent-note">
+            sortie parent : maintenir <strong>shift + m</strong> au clavier
+            ou <strong>lb + rb + start</strong> sur la manette
           </p>
 
           <div class="menu-groups">
@@ -83,6 +87,38 @@
       </section>
 
       <div class="session-timer" id="sessionTimer" aria-hidden="true"></div>
+      <section class="resume-screen" id="resumeScreen" aria-hidden="true">
+        <div class="resume-card">
+          <p class="resume-kicker">mode kiosque</p>
+          <h2 class="resume-title" id="resumeTitle">plein ecran requis</h2>
+          <p class="resume-text" id="resumeText">
+            touche une fois pour revenir dans le jeu en plein ecran.
+          </p>
+          <div class="resume-actions">
+            <button id="resumeButton" class="resume-button" type="button">reprendre</button>
+            <button id="resumeMenuButton" class="resume-menu-button" type="button" hidden>
+              retour menu
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="parent-screen" id="parentScreen" aria-hidden="true">
+        <div class="parent-card">
+          <p class="parent-kicker">options parent</p>
+          <h2 class="parent-title">sortie protegee</h2>
+          <p class="parent-text">
+            refaire la combinaison pour fermer ce panneau.
+          </p>
+          <div class="parent-actions">
+            <button id="parentMenuAction" class="parent-action" type="button">
+              retour au menu
+            </button>
+            <button id="parentExitAction" class="parent-action parent-action-soft" type="button">
+              quitter le plein ecran
+            </button>
+          </div>
+        </div>
+      </section>
       <div class="ending-screen" id="endingScreen" aria-hidden="true">
         <div class="ending-card">
           <p class="ending-title">petite pause</p>
