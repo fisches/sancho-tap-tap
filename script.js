@@ -143,7 +143,6 @@ const resumeMenuButton = document.getElementById("resumeMenuButton");
 const parentScreen = document.getElementById("parentScreen");
 const parentMenuAction = document.getElementById("parentMenuAction");
 const parentExitAction = document.getElementById("parentExitAction");
-const parentDevTools = document.getElementById("parentDevTools");
 const lockScreen = document.getElementById("lockScreen");
 const endingScreen = document.getElementById("endingScreen");
 const hint = document.getElementById("hint");
@@ -785,14 +784,6 @@ function updateParentFocus() {
   });
 }
 
-function syncParentDevTools() {
-  if (!parentDevTools) {
-    return;
-  }
-
-  parentDevTools.hidden = !(state.isPlaying && !state.isEnding && !state.isSessionLocked);
-}
-
 function applyModeClasses() {
   const resolvedPerformanceMode = getResolvedPerformanceMode();
   playground.classList.toggle("is-low-power", resolvedPerformanceMode !== "normal");
@@ -893,7 +884,6 @@ function openParentPanel() {
   gamepadState.parentFocusIndex = 0;
   parentScreen.setAttribute("aria-hidden", "false");
   playground.classList.add("is-parent-open");
-  syncParentDevTools();
   updateParentFocus();
 }
 
@@ -905,7 +895,6 @@ function closeParentPanel() {
   state.isParentPanelOpen = false;
   parentScreen.setAttribute("aria-hidden", "true");
   playground.classList.remove("is-parent-open");
-  syncParentDevTools();
   updateParentFocus();
 
   if (state.isSessionLocked) {
@@ -1405,32 +1394,6 @@ function handleOptionClick(event) {
   updateMenuFocus();
 }
 
-function triggerDevSpecialPreview(kind) {
-  if (!state.isPlaying || state.isEnding || state.isSessionLocked) {
-    return;
-  }
-
-  const resolvedKind = kind === "random" ? chooseSpecialEventKind() : kind;
-  const point = nextKeyboardPoint();
-  closeParentPanel();
-  window.setTimeout(() => {
-    if (!state.isPlaying || state.isEnding || state.isPausedForFocus || state.isParentPanelOpen) {
-      return;
-    }
-    endSpecialEvent();
-    startSpecialEvent(resolvedKind, point.x, point.y);
-  }, 90);
-}
-
-function handleParentDevClick(event) {
-  const button = event.target.closest("[data-special-preview]");
-  if (!button) {
-    return;
-  }
-
-  triggerDevSpecialPreview(button.dataset.specialPreview);
-}
-
 async function toggleFullscreen() {
   try {
     if (!document.fullscreenElement) {
@@ -1611,7 +1574,6 @@ setGamepadStatusLabel();
 resetGamepadCursor();
 updateMenuFocus();
 syncFullscreenState();
-syncParentDevTools();
 pollGamepads();
 registerServiceWorker();
 
@@ -1624,7 +1586,6 @@ resumeButton.addEventListener("click", handleResumeAction);
 resumeMenuButton.addEventListener("click", showMenu);
 parentMenuAction.addEventListener("click", showMenu);
 parentExitAction.addEventListener("click", exitFullscreenToMenu);
-parentDevTools?.addEventListener("click", handleParentDevClick);
 window.addEventListener("keydown", handleKeydown);
 window.addEventListener("keyup", releaseKey);
 window.addEventListener("blur", handleWindowBlur);
