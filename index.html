@@ -7,7 +7,11 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <meta name="theme-color" content="#f6f3ea" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Sancho Tap Tap</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -34,11 +38,11 @@
         <div class="menu-card">
           <h1 class="menu-title">sancho tap tap</h1>
           <p class="menu-pitch">
-            Un petit jeu tout simple. On tape, on appuie, et des emojis
-            rigolos apparaissent partout avec de jolies animations.
+            Tape sur l'ecran, clique avec la souris, appuie sur un clavier
+            ou sur une manette: les emojis arrivent partout tout seuls.
           </p>
           <p class="menu-parent-note">
-            sortie parent : maintenir <strong>shift + m</strong> au clavier
+            sortie parent : <strong>shift + m</strong> au clavier
             ou <strong>lb + rb + start</strong> sur la manette
           </p>
 
@@ -57,26 +61,6 @@
                 </button>
                 <button class="option-button" type="button" data-group="timer" data-value="off">
                   infini
-                </button>
-              </div>
-            </section>
-
-            <section class="option-group" aria-labelledby="emojiTitle">
-              <p class="option-title" id="emojiTitle">emojis</p>
-              <div class="option-row" id="emojiOptions">
-                <button class="option-button" type="button" data-group="emoji" data-value="animals">
-                  animaux
-                </button>
-                <button class="option-button" type="button" data-group="emoji" data-value="princess">
-                  princesse
-                </button>
-                <button class="option-button" type="button" data-group="emoji" data-value="adventure">
-                  aventure
-                </button>
-              </div>
-              <div class="option-row option-row-featured">
-                <button class="option-button option-button-featured is-active" type="button" data-group="emoji" data-value="all">
-                  tous
                 </button>
               </div>
             </section>
@@ -117,6 +101,23 @@
               quitter le plein ecran
             </button>
           </div>
+          <div id="parentDevTools" class="parent-dev-tools" hidden>
+            <p class="parent-dev-title">test dev</p>
+            <div class="parent-dev-actions">
+              <button class="parent-dev-button" type="button" data-special-preview="hero">
+                grand ami
+              </button>
+              <button class="parent-dev-button" type="button" data-special-preview="rainbow">
+                arc-en-ciel
+              </button>
+              <button class="parent-dev-button" type="button" data-special-preview="super-rain">
+                super pluie
+              </button>
+              <button class="parent-dev-button parent-dev-button-soft" type="button" data-special-preview="random">
+                surprise
+              </button>
+            </div>
+          </div>
         </div>
       </section>
       <div class="ending-screen" id="endingScreen" aria-hidden="true">
@@ -125,9 +126,22 @@
           <p class="ending-text">la partie se termine tranquillement</p>
         </div>
       </div>
+      <section class="lock-screen" id="lockScreen" aria-hidden="true">
+        <div class="lock-card">
+          <p class="lock-kicker">partie terminee</p>
+          <h2 class="lock-title">retour parent</h2>
+          <p class="lock-text">
+            pour relancer une partie, utilise la combinaison parent.
+          </p>
+          <p class="lock-combo">
+            <strong>shift + m</strong> ou <strong>lb + rb + start</strong>
+          </p>
+        </div>
+      </section>
       <div class="hint" id="hint" aria-hidden="true">sancho tap tap</div>
       <div class="gamepad-cursor" id="gamepadCursor" aria-hidden="true"></div>
       <div class="emoji-stage" id="emojiStage" aria-hidden="true"></div>
+      <div class="special-stage" id="specialStage" aria-hidden="true"></div>
     </main>
 
     <script src="./script.js"></script>

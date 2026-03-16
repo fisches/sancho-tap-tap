@@ -1,0 +1,19 @@
+{
+  "name": "Sancho Tap Tap",
+  "short_name": "Sancho Tap Tap",
+  "description": "Jeu tactile local avec emojis pour jeune enfant, optimise pour usage kiosque.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3ea",
+  "theme_color": "#f6f3ea",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

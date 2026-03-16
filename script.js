@@ -1,4 +1,12 @@
-const themes = ["theme-sky", "theme-meadow", "theme-ocean", "theme-paper"];
+const themes = [
+  "theme-sky",
+  "theme-meadow",
+  "theme-ocean",
+  "theme-paper",
+  "theme-sunset",
+  "theme-mint",
+  "theme-peach"
+];
 
 const animalEmojiPool = [
   "🐥", "🐣", "🐤", "🐻", "🐼", "🐨", "🐰", "🐹", "🐭", "🐁", "🦊", "🐸", "🐢", "🐙",
@@ -94,11 +102,23 @@ const randomEmojiPool = [
 ];
 
 const sparklePools = ["✨", "⭐", "💫", "🫧", "🌟", "💛"];
+const specialHeroPool = ["🦄", "👑", "🦖", "🐬", "🚀", "👸", "🤖", "🐲", "🌈", "💫"];
+const specialEventKinds = ["hero", "rainbow", "super-rain"];
+const specialEventConfig = {
+  minCooldownMs: 22000,
+  maxCooldownMs: 38000,
+  minInteractions: 14
+};
 const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
   /arm|aarch64|raspberry/i.test(navigator.userAgent);
-const maxBursts = lowPowerMode ? 12 : 24;
+const storageKey = "sancho-tap-tap:settings";
+const performanceProfiles = {
+  normal: { maxBursts: 24, sparkleRange: [3, 5], ring: true, primeCount: 2, rainBursts: 2, sizeScale: 1 },
+  light: { maxBursts: 12, sparkleRange: [1, 2], ring: false, primeCount: 1, rainBursts: 1, sizeScale: 0.9 },
+  ultra: { maxBursts: 8, sparkleRange: [0, 1], ring: false, primeCount: 1, rainBursts: 0, sizeScale: 0.8 }
+};
 const speedSettings = {
   slow: { burstLifetime: 4000, keyBurstInterval: 220, animationDuration: 4000 },
   normal: { burstLifetime: 2700, keyBurstInterval: 150, animationDuration: 2700 },
@@ -107,6 +127,7 @@ const speedSettings = {
 
 const playground = document.getElementById("playground");
 const emojiStage = document.getElementById("emojiStage");
+const specialStage = document.getElementById("specialStage");
 const fullscreenButton = document.getElementById("fullscreenButton");
 const parentHotspot = document.getElementById("parentHotspot");
 const menuScreen = document.getElementById("menuScreen");
@@ -122,6 +143,8 @@ const resumeMenuButton = document.getElementById("resumeMenuButton");
 const parentScreen = document.getElementById("parentScreen");
 const parentMenuAction = document.getElementById("parentMenuAction");
 const parentExitAction = document.getElementById("parentExitAction");
+const parentDevTools = document.getElementById("parentDevTools");
+const lockScreen = document.getElementById("lockScreen");
 const endingScreen = document.getElementById("endingScreen");
 const hint = document.getElementById("hint");
 const optionButtons = Array.from(document.querySelectorAll(".option-button"));
@@ -136,18 +159,26 @@ let sessionTimerIntervalId = null;
 let endingTimeoutId = null;
 let menuComboTimeoutId = null;
 let menuComboSource = null;
+let specialEventTimeoutId = null;
+let specialEventTaskIds = [];
 const state = {
   isPlaying: false,
   speedMode: "normal",
-  emojiMode: "all",
+  visualMode: "normal",
   timerMode: "10",
   sessionEndsAt: null,
   remainingSessionMs: null,
   isEnding: false,
+  isSessionLocked: false,
   isPausedForFocus: false,
   isParentPanelOpen: false,
   fullscreenWanted: false,
-  pendingStart: false
+  pendingStart: false,
+  specialEventActive: false,
+  specialEventKind: "",
+  lastSpecialKind: "",
+  nextSpecialAt: 0,
+  interactionsSinceSpecial: 0
 };
 const gamepadState = {
   activeIndex: null,
@@ -171,22 +202,43 @@ const gamepadState = {
 };
 const menuGrid = [
   [0, 1, 2, 3],
-  [4, 5, 6],
-  [7],
-  [8]
+  [4]
 ];
 const gamepadConfig = {
   deadzone: 0.24,
   moveSpeed: 15,
   menuMoveCooldown: 170
 };
-const menuReturnConfig = {
-  keyboardHoldMs: 1200,
-  gamepadHoldMs: 1200
-};
-
 function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
+}
+
+function randomBetween(min, max) {
+  return min + Math.random() * (max - min);
+}
+
+function loadSavedSettings() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+    if (saved.timerMode) {
+      state.timerMode = saved.timerMode;
+    }
+  } catch (error) {
+    console.error("Settings load error", error);
+  }
+}
+
+function persistSettings() {
+  try {
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        timerMode: state.timerMode
+      })
+    );
+  } catch (error) {
+    console.error("Settings save error", error);
+  }
 }
 
 function emojiToAssetCode(emojiChar) {
@@ -198,31 +250,35 @@ function emojiToAssetCode(emojiChar) {
 }
 
 function getCurrentEmojiPool() {
-  if (state.emojiMode === "animals") {
-    return animalEmojiPool;
-  }
-
-  if (state.emojiMode === "vehicles") {
-    return vehicleEmojiPool;
-  }
-
-  if (state.emojiMode === "dinos") {
-    return dinoEmojiPool;
-  }
-
-  if (state.emojiMode === "space") {
-    return spaceEmojiPool;
-  }
-
-  if (state.emojiMode === "princess") {
-    return princessEmojiPool;
-  }
-
-  if (state.emojiMode === "adventure") {
-    return adventureEmojiPool;
-  }
-
   return randomEmojiPool;
+}
+
+function chooseAutoVisualMode() {
+  const roll = Math.random();
+  if (roll < 0.5) {
+    return "normal";
+  }
+  if (roll < 0.82) {
+    return "rain";
+  }
+  return "giant";
+}
+
+function chooseSpecialEventKind() {
+  const availableKinds = specialEventKinds.filter((kind) => kind !== state.lastSpecialKind);
+  return pickRandom(availableKinds.length ? availableKinds : specialEventKinds);
+}
+
+function scheduleNextSpecialEvent(baseTime = Date.now()) {
+  state.nextSpecialAt = baseTime + randomBetween(specialEventConfig.minCooldownMs, specialEventConfig.maxCooldownMs);
+}
+
+function getResolvedPerformanceMode() {
+  return lowPowerMode ? "light" : "normal";
+}
+
+function getPerformanceProfile() {
+  return performanceProfiles[getResolvedPerformanceMode()];
 }
 
 function getSpeedSetting() {
@@ -252,14 +308,19 @@ function createEmoji(x, y, emojiChar, variant = "main") {
   emoji.loading = "eager";
   emoji.style.left = `${x}px`;
   emoji.style.top = `${y}px`;
-  emoji.style.animationDuration = `${getSpeedSetting().animationDuration}ms`;
+  if (variant !== "rain") {
+    emoji.style.animationDuration = `${getSpeedSetting().animationDuration}ms`;
+  }
   emoji.style.setProperty("--twist", `${(Math.random() * 26 - 13).toFixed(2)}deg`);
+  emoji.style.setProperty("--size-scale", getPerformanceProfile().sizeScale.toFixed(2));
   return emoji;
 }
 
 function createSparkles(x, y) {
   const sparkles = [];
-  const count = lowPowerMode ? 1 + Math.floor(Math.random() * 2) : 3 + Math.floor(Math.random() * 3);
+  const profile = getPerformanceProfile();
+  const [sparkleMin, sparkleMax] = profile.sparkleRange;
+  const count = sparkleMax <= sparkleMin ? sparkleMin : sparkleMin + Math.floor(Math.random() * (sparkleMax - sparkleMin + 1));
 
   for (let index = 0; index < count; index += 1) {
     const sparkle = createEmoji(x, y, pickRandom(sparklePools), "sparkle");
@@ -279,23 +340,50 @@ function createRing(x, y) {
   return ring;
 }
 
+function clearSpecialTasks() {
+  specialEventTaskIds.forEach((taskId) => window.clearTimeout(taskId));
+  specialEventTaskIds = [];
+}
+
+function scheduleSpecialTask(callback, delay) {
+  const taskId = window.setTimeout(() => {
+    specialEventTaskIds = specialEventTaskIds.filter((id) => id !== taskId);
+    if (!state.specialEventActive) {
+      return;
+    }
+    callback();
+  }, delay);
+  specialEventTaskIds.push(taskId);
+}
+
 function pruneBurstsIfNeeded() {
-  while (burstCount >= maxBursts && emojiStage.firstChild) {
+  while (burstCount >= getPerformanceProfile().maxBursts && emojiStage.firstChild) {
     emojiStage.removeChild(emojiStage.firstChild);
     burstCount -= 1;
   }
 }
 
-function spawnBurst(x, y) {
+function spawnBurst(x, y, options = {}) {
   pruneBurstsIfNeeded();
 
   const burst = document.createElement("div");
   burst.className = "burst";
+  const sizeMultiplier = options.sizeMultiplier || 1;
+  const emojiVariant = options.variant || "main";
 
-  const mainEmoji = createEmoji(x, y, pickRandom(getCurrentEmojiPool()));
-  const ring = lowPowerMode ? null : createRing(x, y);
+  const mainEmoji = createEmoji(x, y, pickRandom(getCurrentEmojiPool()), emojiVariant);
+  mainEmoji.style.setProperty("--burst-scale", sizeMultiplier.toFixed(2));
+  let burstLifetime = getSpeedSetting().burstLifetime;
+  if (emojiVariant === "rain") {
+    const fallDistance = Math.max(window.innerHeight - y + 180, 260);
+    mainEmoji.classList.add("rain-drop");
+    mainEmoji.style.animationDuration = "7800ms";
+    mainEmoji.style.setProperty("--rain-drift", `${(Math.random() * 220 - 110).toFixed(2)}px`);
+    mainEmoji.style.setProperty("--rain-fall", `${fallDistance.toFixed(2)}px`);
+    burstLifetime = Math.max(getSpeedSetting().burstLifetime, 7800);
+  }
+  const ring = getPerformanceProfile().ring ? createRing(x, y) : null;
   const sparkles = createSparkles(x, y);
-  const { burstLifetime } = getSpeedSetting();
 
   if (ring) {
     burst.appendChild(ring);
@@ -311,6 +399,299 @@ function spawnBurst(x, y) {
       burstCount -= 1;
     }
   }, burstLifetime);
+}
+
+function createSpecialOverlay(className, x, y) {
+  const overlay = document.createElement("div");
+  overlay.className = `special-event ${className}`;
+  overlay.style.setProperty("--origin-x", `${x.toFixed(2)}px`);
+  overlay.style.setProperty("--origin-y", `${y.toFixed(2)}px`);
+  return overlay;
+}
+
+function createSpecialEmojiNode(x, y, emojiChar, className, scale = 1) {
+  const emoji = createEmoji(x, y, emojiChar, "main");
+  emoji.classList.add("special-emoji", className);
+  emoji.style.animationDuration = "";
+  emoji.style.setProperty("--burst-scale", scale.toFixed(2));
+  return emoji;
+}
+
+function setTravelPath(node, startX, endX, y) {
+  node.style.setProperty("--travel-start-x", `${startX.toFixed(2)}px`);
+  node.style.setProperty("--travel-end-x", `${endX.toFixed(2)}px`);
+  node.style.setProperty("--travel-y", `${y.toFixed(2)}px`);
+}
+
+function setWanderPath(node, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY) {
+  node.style.setProperty("--wander-start-x", `${startX.toFixed(2)}px`);
+  node.style.setProperty("--wander-start-y", `${startY.toFixed(2)}px`);
+  node.style.setProperty("--wander-mid1-x", `${mid1X.toFixed(2)}px`);
+  node.style.setProperty("--wander-mid1-y", `${mid1Y.toFixed(2)}px`);
+  node.style.setProperty("--wander-mid2-x", `${mid2X.toFixed(2)}px`);
+  node.style.setProperty("--wander-mid2-y", `${mid2Y.toFixed(2)}px`);
+  node.style.setProperty("--wander-mid3-x", `${mid3X.toFixed(2)}px`);
+  node.style.setProperty("--wander-mid3-y", `${mid3Y.toFixed(2)}px`);
+  node.style.setProperty("--wander-end-x", `${endX.toFixed(2)}px`);
+  node.style.setProperty("--wander-end-y", `${endY.toFixed(2)}px`);
+}
+
+function interpolateWanderPoint(points, progress) {
+  const clamped = clamp(progress, 0, 1);
+  const segmentCount = points.length - 1;
+  const scaled = clamped * segmentCount;
+  const index = Math.min(Math.floor(scaled), segmentCount - 1);
+  const localT = scaled - index;
+  const start = points[index];
+  const end = points[index + 1];
+
+  return {
+    x: start.x + (end.x - start.x) * localT,
+    y: start.y + (end.y - start.y) * localT
+  };
+}
+
+function createSvgNode(tagName) {
+  return document.createElementNS("http://www.w3.org/2000/svg", tagName);
+}
+
+function cubicBezierPoint(start, control1, control2, end, t) {
+  const inverse = 1 - t;
+  return (
+    inverse ** 3 * start +
+    3 * inverse ** 2 * t * control1 +
+    3 * inverse * t ** 2 * control2 +
+    t ** 3 * end
+  );
+}
+
+function spawnHeroSpecial(x, y) {
+  const exitLeft = Math.random() > 0.5;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const startX = randomBetween(width * 0.22, width * 0.78);
+  const startY = 36;
+  const mid1X = exitLeft ? width * 0.72 : width * 0.28;
+  const mid1Y = height * 0.24;
+  const mid2X = exitLeft ? width * 0.24 : width * 0.76;
+  const mid2Y = height * 0.44;
+  const mid3X = exitLeft ? width * 0.68 : width * 0.32;
+  const mid3Y = height * 0.68;
+  const endX = exitLeft ? 42 : width - 42;
+  const endY = randomBetween(height * 0.78, height * 0.9);
+  const wanderPoints = [
+    { x: startX, y: startY },
+    { x: mid1X, y: mid1Y },
+    { x: mid2X, y: mid2Y },
+    { x: mid3X, y: mid3Y },
+    { x: endX, y: endY }
+  ];
+  const overlay = createSpecialOverlay("special-hero", width / 2, height / 2);
+  const heroEmoji = createSpecialEmojiNode(startX, startY, pickRandom(["🦄", "🐬", "🐘", "🦒", "🦁"]), "special-hero-emoji", 2.85);
+  setWanderPath(heroEmoji, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY);
+
+  overlay.appendChild(heroEmoji);
+  specialStage.replaceChildren(overlay);
+
+  const burstCountForHero = getResolvedPerformanceMode() === "normal" ? 11 : 6;
+  for (let index = 0; index < burstCountForHero; index += 1) {
+    scheduleSpecialTask(() => {
+      const progress = index / Math.max(burstCountForHero - 1, 1);
+      const point = interpolateWanderPoint(wanderPoints, progress);
+      const nextPoint = interpolateWanderPoint(wanderPoints, Math.min(progress + 0.08, 1));
+      const trailX = point.x - (nextPoint.x - point.x) * 0.7;
+      const trailY = point.y - (nextPoint.y - point.y) * 0.7;
+      const burstX = clamp(trailX + randomBetween(-16, 16), 40, window.innerWidth - 40);
+      const burstY = clamp(trailY + randomBetween(-18, 18), 40, window.innerHeight - 40);
+      spawnBurst(burstX, burstY, { sizeMultiplier: 0.96 + Math.random() * 0.18 });
+    }, 900 + index * 300);
+  }
+
+  return 5600;
+}
+
+function spawnRainbowSpecial(x, y) {
+  const overlay = createSpecialOverlay("special-rainbow", x, y);
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const arcColors = [
+    "#ff5d67",
+    "#ff9d3b",
+    "#ffe25d",
+    "#67d87b",
+    "#5ab8ff",
+    "#7283ff",
+    "#ff77d2"
+  ];
+
+  const ribbon = document.createElement("div");
+  ribbon.className = "special-rainbow-ribbon";
+
+  arcColors.forEach((color, index) => {
+    const band = document.createElement("div");
+    band.className = "special-rainbow-band";
+    band.style.setProperty("--band-color", color);
+    band.style.setProperty("--band-offset", `${index * 1.12}rem`);
+    band.style.animationDelay = `${index * 35}ms`;
+    ribbon.appendChild(band);
+  });
+  overlay.appendChild(ribbon);
+
+  ["left", "right"].forEach((side) => {
+    const cloud = document.createElement("div");
+    cloud.className = `special-rainbow-cloud special-rainbow-cloud-${side}`;
+    overlay.appendChild(cloud);
+  });
+
+  specialStage.replaceChildren(overlay);
+
+  const burstCountForRainbow = getResolvedPerformanceMode() === "normal" ? 8 : 4;
+  for (let index = 0; index < burstCountForRainbow; index += 1) {
+    scheduleSpecialTask(() => {
+      const progress = (index + 1) / (burstCountForRainbow + 1);
+      const burstX = width * (0.12 + progress * 0.76);
+      const burstY = clamp(height * 0.7 - Math.sin(progress * Math.PI) * (height * 0.28), 70, height - 90);
+      spawnBurst(burstX, burstY, { sizeMultiplier: 0.96 + Math.random() * 0.2 });
+    }, 220 + index * 160);
+  }
+
+  return 3600;
+}
+
+function spawnSuperRainSpecial(x, y) {
+  const overlay = createSpecialOverlay("special-super-rain", x, y);
+  const cloud = document.createElement("div");
+  cloud.className = "special-cloud";
+  const cloudX = clamp(x, 120, window.innerWidth - 120);
+  const cloudY = clamp(y - 120, 72, window.innerHeight * 0.32);
+  cloud.style.left = `${cloudX}px`;
+  cloud.style.top = `${cloudY}px`;
+  overlay.appendChild(cloud);
+  const cloudTwo = document.createElement("div");
+  cloudTwo.className = "special-cloud special-cloud-secondary";
+  cloudTwo.style.left = `${clamp(cloudX + randomBetween(-180, 180), 120, window.innerWidth - 120)}px`;
+  cloudTwo.style.top = `${clamp(cloudY + randomBetween(-20, 20), 72, window.innerHeight * 0.34)}px`;
+  overlay.appendChild(cloudTwo);
+  specialStage.replaceChildren(overlay);
+
+  const burstCountForRain = getResolvedPerformanceMode() === "normal" ? 16 : 8;
+  for (let index = 0; index < burstCountForRain; index += 1) {
+    scheduleSpecialTask(() => {
+      const burstX = randomBetween(window.innerWidth * 0.08, window.innerWidth * 0.92);
+      const burstY = randomBetween(28, Math.max(window.innerHeight * 0.34, 64));
+      spawnBurst(burstX, burstY, {
+        sizeMultiplier: 1 + Math.random() * 0.36,
+        variant: "rain"
+      });
+    }, 120 + index * 150);
+  }
+
+  return 4300;
+}
+
+function endSpecialEvent() {
+  if (specialEventTimeoutId) {
+    window.clearTimeout(specialEventTimeoutId);
+    specialEventTimeoutId = null;
+  }
+  clearSpecialTasks();
+  state.specialEventActive = false;
+  state.specialEventKind = "";
+  specialStage.replaceChildren();
+  applyModeClasses();
+}
+
+function startSpecialEvent(kind, x, y) {
+  if (state.specialEventActive || !canInteractWithGameplay()) {
+    return;
+  }
+
+  state.specialEventActive = true;
+  state.specialEventKind = kind;
+  state.lastSpecialKind = kind;
+  state.interactionsSinceSpecial = 0;
+  scheduleNextSpecialEvent(Date.now());
+  applyModeClasses();
+
+  let duration = 3200;
+  if (kind === "hero") {
+    duration = spawnHeroSpecial(x, y);
+  } else if (kind === "rainbow") {
+    duration = spawnRainbowSpecial(x, y);
+  } else {
+    duration = spawnSuperRainSpecial(x, y);
+  }
+
+  specialEventTimeoutId = window.setTimeout(() => {
+    specialEventTimeoutId = null;
+    endSpecialEvent();
+  }, duration);
+}
+
+function maybeTriggerSpecialEvent(x, y) {
+  if (!canInteractWithGameplay() || state.specialEventActive) {
+    return;
+  }
+
+  state.interactionsSinceSpecial += 1;
+  if (state.interactionsSinceSpecial < specialEventConfig.minInteractions) {
+    return;
+  }
+
+  if (Date.now() < state.nextSpecialAt) {
+    return;
+  }
+
+  startSpecialEvent(chooseSpecialEventKind(), x, y);
+}
+
+function triggerPlayModeBursts(x, y) {
+  state.visualMode = chooseAutoVisualMode();
+  applyModeClasses();
+
+  if (state.visualMode === "rain") {
+    const originX = clamp(x + (Math.random() * 240 - 120), 36, window.innerWidth - 36);
+    const originY = clamp(y - 90 - Math.random() * 150, 26, Math.max(y - 22, 26));
+    spawnBurst(originX, originY, { sizeMultiplier: 0.92, variant: "rain" });
+    const extraBursts = Math.max(getPerformanceProfile().rainBursts, 2);
+    for (let index = 0; index < extraBursts; index += 1) {
+      const point = {
+        x: x + (Math.random() * 520 - 260),
+        y: y - 120 - Math.random() * Math.min(window.innerHeight * 0.42, 280)
+      };
+      window.setTimeout(() => {
+        if (canInteractWithGameplay()) {
+          spawnBurst(
+            clamp(point.x, 36, window.innerWidth - 36),
+            clamp(point.y, 24, Math.max(y - 16, 24)),
+            {
+              sizeMultiplier: 0.82 + Math.random() * 0.24,
+              variant: "rain"
+            }
+          );
+        }
+      }, 420 * (index + 1));
+    }
+    return;
+  }
+
+  if (state.visualMode === "giant") {
+    spawnBurst(x, y, { sizeMultiplier: 1.85 });
+    if (getResolvedPerformanceMode() === "normal") {
+      window.setTimeout(() => {
+        if (canInteractWithGameplay()) {
+          spawnBurst(
+            clamp(x + (Math.random() * 140 - 70), 40, window.innerWidth - 40),
+            clamp(y + (Math.random() * 120 - 60), 40, window.innerHeight - 40),
+            { sizeMultiplier: 1.2 }
+          );
+        }
+      }, 90);
+    }
+    return;
+  }
+
+  spawnBurst(x, y);
 }
 
 function hideHint() {
@@ -404,6 +785,27 @@ function updateParentFocus() {
   });
 }
 
+function syncParentDevTools() {
+  if (!parentDevTools) {
+    return;
+  }
+
+  parentDevTools.hidden = !(state.isPlaying && !state.isEnding && !state.isSessionLocked);
+}
+
+function applyModeClasses() {
+  const resolvedPerformanceMode = getResolvedPerformanceMode();
+  playground.classList.toggle("is-low-power", resolvedPerformanceMode !== "normal");
+  playground.classList.toggle("is-ultra-light", resolvedPerformanceMode === "ultra");
+  playground.classList.toggle("is-rain-mode", state.visualMode === "rain");
+  playground.classList.toggle("is-giant-mode", state.visualMode === "giant");
+  playground.classList.toggle("is-special-active", state.specialEventActive);
+  playground.classList.toggle("is-special-hero", state.specialEventKind === "hero");
+  playground.classList.toggle("is-special-rainbow", state.specialEventKind === "rainbow");
+  playground.classList.toggle("is-special-super-rain", state.specialEventKind === "super-rain");
+  playground.classList.toggle("is-session-locked", state.isSessionLocked);
+}
+
 function formatRemainingTime(remainingMs) {
   const totalSeconds = Math.max(Math.ceil(remainingMs / 1000), 0);
   const minutes = Math.floor(totalSeconds / 60);
@@ -464,7 +866,8 @@ function isGamepadBurstPressed(gamepad) {
 function triggerGamepadBurst() {
   const point = nextKeyboardPoint();
   hideHint();
-  spawnBurst(point.x, point.y);
+  triggerPlayModeBursts(point.x, point.y);
+  maybeTriggerSpecialEvent(point.x, point.y);
 }
 
 function startGamepadSpawn() {
@@ -479,16 +882,18 @@ function startGamepadSpawn() {
 }
 
 function openParentPanel() {
-  if (!state.isPlaying || state.isEnding || state.isParentPanelOpen) {
+  if ((!state.isPlaying && !state.isSessionLocked) || state.isEnding || state.isParentPanelOpen) {
     return;
   }
 
   stopAllInteractiveInput();
+  endSpecialEvent();
   pauseSessionTimer();
   state.isParentPanelOpen = true;
   gamepadState.parentFocusIndex = 0;
   parentScreen.setAttribute("aria-hidden", "false");
   playground.classList.add("is-parent-open");
+  syncParentDevTools();
   updateParentFocus();
 }
 
@@ -500,7 +905,12 @@ function closeParentPanel() {
   state.isParentPanelOpen = false;
   parentScreen.setAttribute("aria-hidden", "true");
   playground.classList.remove("is-parent-open");
+  syncParentDevTools();
   updateParentFocus();
+
+  if (state.isSessionLocked) {
+    return;
+  }
 
   if (state.isPlaying && !state.isEnding) {
     if (state.fullscreenWanted && !document.fullscreenElement) {
@@ -524,23 +934,15 @@ function isKeyboardMenuCombo(event) {
 }
 
 function startKeyboardMenuCombo() {
-  if (menuComboSource === "keyboard") {
+  if (!state.isPlaying && !state.isSessionLocked) {
     return;
   }
 
-  clearMenuReturnCombo();
-  menuComboSource = "keyboard";
-  menuComboTimeoutId = window.setTimeout(() => {
-    menuComboTimeoutId = null;
-    menuComboSource = null;
-    if (state.isPlaying && heldKeys.has("KeyM") && (heldKeys.has("ShiftLeft") || heldKeys.has("ShiftRight"))) {
-      if (state.isParentPanelOpen) {
-        closeParentPanel();
-      } else {
-        openParentPanel();
-      }
-    }
-  }, menuReturnConfig.keyboardHoldMs);
+  if (state.isParentPanelOpen) {
+    closeParentPanel();
+  } else {
+    openParentPanel();
+  }
 }
 
 function maybeStartGamepadMenuCombo(gamepad) {
@@ -550,29 +952,20 @@ function maybeStartGamepadMenuCombo(gamepad) {
   const comboPressed = leftBumperPressed && rightBumperPressed && startPressed;
 
   if (!comboPressed) {
-    if (menuComboSource === "gamepad") {
-      clearMenuReturnCombo();
-    }
     return false;
   }
 
-  if (menuComboSource === "gamepad") {
+  if (gamepadState.previousButtons.menu) {
     return true;
   }
 
-  clearMenuReturnCombo();
-  menuComboSource = "gamepad";
-  menuComboTimeoutId = window.setTimeout(() => {
-    menuComboTimeoutId = null;
-    menuComboSource = null;
-    if (state.isPlaying) {
-      if (state.isParentPanelOpen) {
-        closeParentPanel();
-      } else {
-        openParentPanel();
-      }
+  if (state.isPlaying || state.isSessionLocked) {
+    if (state.isParentPanelOpen) {
+      closeParentPanel();
+    } else {
+      openParentPanel();
     }
-  }, menuReturnConfig.gamepadHoldMs);
+  }
 
   return true;
 }
@@ -632,8 +1025,14 @@ function activateFocusedMenuItem() {
 }
 
 function setMenuFocusForState() {
-  const timerIndexMap = { "5": 0, "10": 1, "15": 2, off: 3 };
-  gamepadState.menuFocusIndex = timerIndexMap[state.timerMode] ?? menuFocusables.length - 1;
+  const focusMap = {
+    "timer:5": 0,
+    "timer:10": 1,
+    "timer:15": 2,
+    "timer:off": 3,
+    play: 4
+  };
+  gamepadState.menuFocusIndex = focusMap[`timer:${state.timerMode}`] ?? focusMap.play;
   updateMenuFocus();
 }
 
@@ -780,7 +1179,8 @@ function handlePointer(event) {
   const pointY = event.clientY;
 
   hideHint();
-  spawnBurst(pointX, pointY);
+  triggerPlayModeBursts(pointX, pointY);
+  maybeTriggerSpecialEvent(pointX, pointY);
 }
 
 function nextKeyboardPoint() {
@@ -796,7 +1196,8 @@ function nextKeyboardPoint() {
 function triggerKeyboardBurst() {
   const point = nextKeyboardPoint();
   hideHint();
-  spawnBurst(point.x, point.y);
+  triggerPlayModeBursts(point.x, point.y);
+  maybeTriggerSpecialEvent(point.x, point.y);
 }
 
 function handleKeydown(event) {
@@ -865,9 +1266,7 @@ function syncOptionButtons() {
   optionButtons.forEach((button) => {
     const group = button.dataset.group;
     const value = button.dataset.value;
-    const isActive =
-      (group === "timer" && value === state.timerMode) ||
-      (group === "emoji" && value === state.emojiMode);
+    const isActive = group === "timer" && value === state.timerMode;
 
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
@@ -877,11 +1276,16 @@ function syncOptionButtons() {
 function showMenu() {
   state.isPlaying = false;
   state.isEnding = false;
+  state.isSessionLocked = false;
   state.isPausedForFocus = false;
   state.isParentPanelOpen = false;
   state.pendingStart = false;
   state.fullscreenWanted = false;
   state.remainingSessionMs = null;
+  state.visualMode = "normal";
+  state.interactionsSinceSpecial = 0;
+  scheduleNextSpecialEvent();
+  endSpecialEvent();
   releaseAllKeys();
   clearPrimeTimeouts();
   clearSessionTimer();
@@ -898,6 +1302,8 @@ function showMenu() {
   menuScreen.removeAttribute("hidden");
   resumeScreen.setAttribute("aria-hidden", "true");
   parentScreen.setAttribute("aria-hidden", "true");
+  lockScreen.setAttribute("aria-hidden", "true");
+  applyModeClasses();
   setMenuFocusForState();
   updateParentFocus();
 }
@@ -908,6 +1314,7 @@ function endSessionSoftly() {
   }
 
   state.isEnding = true;
+  endSpecialEvent();
   clearPrimeTimeouts();
   clearSessionTimer();
   stopAllInteractiveInput();
@@ -917,7 +1324,13 @@ function endSessionSoftly() {
   endingTimeoutId = window.setTimeout(() => {
     endingTimeoutId = null;
     endingScreen.setAttribute("aria-hidden", "true");
-    showMenu();
+    state.isPlaying = false;
+    state.isEnding = false;
+    state.isSessionLocked = true;
+    playground.classList.remove("is-playing");
+    playground.classList.remove("is-ending");
+    lockScreen.setAttribute("aria-hidden", "false");
+    applyModeClasses();
   }, 2600);
 }
 
@@ -951,6 +1364,10 @@ function startSessionCore() {
   state.pendingStart = false;
   state.isPausedForFocus = false;
   state.isParentPanelOpen = false;
+  state.visualMode = "normal";
+  state.interactionsSinceSpecial = 0;
+  scheduleNextSpecialEvent();
+  endSpecialEvent();
   applyRandomTheme();
   clearPrimeTimeouts();
   clearBursts();
@@ -959,10 +1376,13 @@ function startSessionCore() {
   playground.classList.remove("is-ending");
   playground.classList.remove("is-paused");
   playground.classList.remove("is-parent-open");
+  state.isSessionLocked = false;
   menuScreen.setAttribute("hidden", "hidden");
   resumeScreen.setAttribute("aria-hidden", "true");
   parentScreen.setAttribute("aria-hidden", "true");
+  lockScreen.setAttribute("aria-hidden", "true");
   endingScreen.setAttribute("aria-hidden", "true");
+  applyModeClasses();
   resetGamepadCursor();
   startSessionTimer();
   primeFirstView();
@@ -979,12 +1399,36 @@ function handleOptionClick(event) {
     state.timerMode = value;
   }
 
-  if (group === "emoji") {
-    state.emojiMode = value;
+  syncOptionButtons();
+  applyModeClasses();
+  persistSettings();
+  updateMenuFocus();
+}
+
+function triggerDevSpecialPreview(kind) {
+  if (!state.isPlaying || state.isEnding || state.isSessionLocked) {
+    return;
   }
 
-  syncOptionButtons();
-  updateMenuFocus();
+  const resolvedKind = kind === "random" ? chooseSpecialEventKind() : kind;
+  const point = nextKeyboardPoint();
+  closeParentPanel();
+  window.setTimeout(() => {
+    if (!state.isPlaying || state.isEnding || state.isPausedForFocus || state.isParentPanelOpen) {
+      return;
+    }
+    endSpecialEvent();
+    startSpecialEvent(resolvedKind, point.x, point.y);
+  }, 90);
+}
+
+function handleParentDevClick(event) {
+  const button = event.target.closest("[data-special-preview]");
+  if (!button) {
+    return;
+  }
+
+  triggerDevSpecialPreview(button.dataset.specialPreview);
 }
 
 async function toggleFullscreen() {
@@ -1023,6 +1467,7 @@ function pauseForInterruption(title, text) {
   }
 
   stopAllInteractiveInput();
+  endSpecialEvent();
   pauseSessionTimer();
   showResumeScreen(title, text);
 }
@@ -1094,19 +1539,30 @@ async function exitFullscreenToMenu() {
 function primeFirstView() {
   const width = window.innerWidth;
   const height = window.innerHeight;
+  const profile = getPerformanceProfile();
 
-  primeTimeouts = [
-    window.setTimeout(() => {
-      if (state.isPlaying) {
-        spawnBurst(width * 0.35, height * 0.52);
-      }
-    }, 260),
-    window.setTimeout(() => {
-      if (state.isPlaying) {
-        spawnBurst(width * 0.65, height * 0.48);
-      }
-    }, 520)
-  ];
+  const entries = [
+    [width * 0.35, height * 0.52, 260],
+    [width * 0.65, height * 0.48, 520]
+  ].slice(0, profile.primeCount);
+
+  primeTimeouts = entries.map(([x, y, delay]) => window.setTimeout(() => {
+    if (state.isPlaying) {
+      triggerPlayModeBursts(x, y);
+    }
+  }, delay));
+}
+
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((error) => {
+      console.error("Service worker error", error);
+    });
+  });
 }
 
 function handleGamepadConnected(event) {
@@ -1146,15 +1602,18 @@ function handleFullscreenChange() {
   }
 }
 
+loadSavedSettings();
 applyRandomTheme();
-playground.classList.toggle("is-low-power", lowPowerMode);
+applyModeClasses();
 syncOptionButtons();
 showMenu();
 setGamepadStatusLabel();
 resetGamepadCursor();
 updateMenuFocus();
 syncFullscreenState();
+syncParentDevTools();
 pollGamepads();
+registerServiceWorker();
 
 playground.addEventListener("pointerdown", handlePointer, { passive: false });
 fullscreenButton.addEventListener("click", toggleFullscreen);
@@ -1165,6 +1624,7 @@ resumeButton.addEventListener("click", handleResumeAction);
 resumeMenuButton.addEventListener("click", showMenu);
 parentMenuAction.addEventListener("click", showMenu);
 parentExitAction.addEventListener("click", exitFullscreenToMenu);
+parentDevTools?.addEventListener("click", handleParentDevClick);
 window.addEventListener("keydown", handleKeydown);
 window.addEventListener("keyup", releaseKey);
 window.addEventListener("blur", handleWindowBlur);
