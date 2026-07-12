@@ -173,6 +173,23 @@ const soundConfigs = {
   off: { volume: 0 },
   soft: { volume: 0.16 }
 };
+const timerLabels = {
+  5: "5 min",
+  10: "10 min",
+  15: "15 min",
+  off: "infini"
+};
+const universeLabels = {
+  surprise: "surprise",
+  animals: "animaux",
+  vehicles: "bolides",
+  magic: "magie"
+};
+const energyLabels = {
+  gentle: "doux",
+  normal: "normal",
+  party: "fete"
+};
 const idleNudgeDelays = {
   gentle: 11000,
   normal: 8500,
@@ -226,14 +243,19 @@ const resumeText = document.getElementById("resumeText");
 const resumeButton = document.getElementById("resumeButton");
 const resumeMenuButton = document.getElementById("resumeMenuButton");
 const parentScreen = document.getElementById("parentScreen");
+const parentRestartAction = document.getElementById("parentRestartAction");
 const parentMenuAction = document.getElementById("parentMenuAction");
 const parentExitAction = document.getElementById("parentExitAction");
+const parentTimerSummary = document.getElementById("parentTimerSummary");
+const parentUniverseSummary = document.getElementById("parentUniverseSummary");
+const parentEnergySummary = document.getElementById("parentEnergySummary");
 const lockScreen = document.getElementById("lockScreen");
 const endingScreen = document.getElementById("endingScreen");
 const endingCelebration = document.getElementById("endingCelebration");
 const hint = document.getElementById("hint");
 const optionButtons = Array.from(document.querySelectorAll(".option-button"));
 const menuFocusables = [...optionButtons, playButton];
+const parentFocusables = [parentRestartAction, parentMenuAction, parentExitAction];
 
 let burstCount = 0;
 const heldKeys = new Map();
@@ -1290,9 +1312,15 @@ function hideResumeScreen() {
 }
 
 function updateParentFocus() {
-  [parentMenuAction, parentExitAction].forEach((button, index) => {
+  parentFocusables.forEach((button, index) => {
     button.classList.toggle("is-focused", state.isParentPanelOpen && gamepadState.connected && index === gamepadState.parentFocusIndex);
   });
+}
+
+function updateParentSummary() {
+  parentTimerSummary.textContent = timerLabels[state.timerMode] || state.timerMode;
+  parentUniverseSummary.textContent = universeLabels[state.universeMode] || state.universeMode;
+  parentEnergySummary.textContent = energyLabels[state.energyMode] || state.energyMode;
 }
 
 function applyModeClasses() {
@@ -1404,6 +1432,7 @@ function openParentPanel() {
   pauseSessionTimer();
   state.isParentPanelOpen = true;
   gamepadState.parentFocusIndex = 0;
+  updateParentSummary();
   parentScreen.setAttribute("aria-hidden", "false");
   playground.classList.add("is-parent-open");
   stopSpecialProgressLoop();
@@ -1437,6 +1466,31 @@ function closeParentPanel() {
     lastGameplayActivityAt = Date.now();
     scheduleIdleNudge();
   }
+}
+
+async function restartCurrentSession() {
+  state.fullscreenWanted = true;
+  parentScreen.setAttribute("aria-hidden", "true");
+  playground.classList.remove("is-parent-open");
+  state.isParentPanelOpen = false;
+  updateParentFocus();
+
+  if (!document.fullscreenElement) {
+    const enteredFullscreen = await ensureFullscreen();
+    if (!enteredFullscreen) {
+      state.pendingStart = true;
+      showResumeScreen(
+        "plein ecran requis",
+        "touche une fois pour passer en plein ecran avant de relancer.",
+        "entrer en plein ecran",
+        true
+      );
+      return;
+    }
+  }
+
+  state.remainingSessionMs = getTimerDurationMs();
+  startSessionCore();
 }
 
 function isModifierKey(code) {
@@ -1614,7 +1668,9 @@ function handleGamepadParentPanel(gamepad, horizontal, primaryPressed) {
   const horizontalPressed = movingLeft || movingRight;
 
   if (horizontalPressed && !gamepadState.previousDirections.left && !gamepadState.previousDirections.right) {
-    gamepadState.parentFocusIndex = movingLeft ? 0 : 1;
+    const delta = movingLeft ? -1 : 1;
+    gamepadState.parentFocusIndex =
+      (gamepadState.parentFocusIndex + delta + parentFocusables.length) % parentFocusables.length;
     updateParentFocus();
   }
 
@@ -1622,7 +1678,7 @@ function handleGamepadParentPanel(gamepad, horizontal, primaryPressed) {
   gamepadState.previousDirections.right = movingRight;
 
   if (primaryPressed && !gamepadState.previousButtons.primary) {
-    [parentMenuAction, parentExitAction][gamepadState.parentFocusIndex]?.click();
+    parentFocusables[gamepadState.parentFocusIndex]?.click();
   }
 }
 
@@ -2198,6 +2254,7 @@ menuScreen.addEventListener("click", handleOptionClick);
 playButton.addEventListener("click", startGame);
 resumeButton.addEventListener("click", handleResumeAction);
 resumeMenuButton.addEventListener("click", showMenu);
+parentRestartAction.addEventListener("click", restartCurrentSession);
 parentMenuAction.addEventListener("click", showMenu);
 parentExitAction.addEventListener("click", exitFullscreenToMenu);
 window.addEventListener("keydown", handleKeydown);

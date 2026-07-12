@@ -14,7 +14,7 @@ Puis ouvrir `http://localhost:8000`.
 
 - fonctionne a la souris, au tactile, au clavier et a la manette
 - passe en plein ecran quand on lance la partie
-- propose un retour parent protege
+- propose un retour parent protege avec resume des reglages et relance directe
 - disperse les emojis sur l'ecran quand la meme zone est tapee en boucle
 - relance doucement l'attention si aucune interaction n'arrive pendant la partie
 - garde les emojis en local dans `assets/twemoji`

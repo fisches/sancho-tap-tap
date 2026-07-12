@@ -898,6 +898,42 @@ button {
   color: var(--ink);
 }
 
+.parent-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+}
+
+.parent-summary div {
+  min-width: 0;
+  padding: 0.58rem 0.44rem;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.parent-summary dt,
+.parent-summary dd {
+  margin: 0;
+}
+
+.parent-summary dt {
+  color: var(--ink-soft);
+  font-size: 0.58rem;
+  letter-spacing: 0.11em;
+  text-transform: lowercase;
+}
+
+.parent-summary dd {
+  margin-top: 0.24rem;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
 .resume-actions,
 .parent-actions {
   display: grid;
@@ -1677,6 +1713,23 @@ button {
   .resume-text,
   .parent-text {
     font-size: 0.84rem;
+  }
+
+  .parent-summary {
+    gap: 0.35rem;
+  }
+
+  .parent-summary div {
+    padding: 0.5rem 0.28rem;
+    border-radius: 0.75rem;
+  }
+
+  .parent-summary dt {
+    font-size: 0.52rem;
+  }
+
+  .parent-summary dd {
+    font-size: 0.72rem;
   }
 
   .resume-menu-button,
