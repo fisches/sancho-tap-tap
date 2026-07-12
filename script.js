@@ -582,12 +582,12 @@ function startSpecialProgressLoop() {
   tick();
 }
 
-function stopSpecialProgressLoop() {
+function stopSpecialProgressLoop({ resetProgress = true } = {}) {
   if (specialProgressFrameId) {
     window.cancelAnimationFrame(specialProgressFrameId);
     specialProgressFrameId = null;
   }
-  if (specialProgress) {
+  if (resetProgress && specialProgress) {
     specialProgress.style.setProperty("--special-progress", "0");
   }
 }
@@ -1462,7 +1462,7 @@ function openParentPanel() {
   updateParentSummary();
   parentScreen.setAttribute("aria-hidden", "false");
   playground.classList.add("is-parent-open");
-  stopSpecialProgressLoop();
+  stopSpecialProgressLoop({ resetProgress: false });
   updateParentFocus();
 }
 
@@ -2127,7 +2127,7 @@ function pauseForInterruption(title, text) {
   endSpecialEvent();
   pauseSessionTimer();
   showResumeScreen(title, text);
-  stopSpecialProgressLoop();
+  stopSpecialProgressLoop({ resetProgress: false });
 }
 
 async function startGame() {
