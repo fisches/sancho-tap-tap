@@ -1928,14 +1928,17 @@ function handleKeydown(event) {
     return;
   }
 
-  if (!state.isPlaying) {
-    return;
-  }
-
-  if (isBlockedGameplayKey(event)) {
+  if (
+    isBlockedGameplayKey(event) &&
+    (state.isPlaying || state.isPausedForFocus || state.isParentPanelOpen || state.isSessionLocked || state.pendingStart)
+  ) {
     event.preventDefault();
     event.stopPropagation();
     releaseKey(event);
+    return;
+  }
+
+  if (!state.isPlaying) {
     return;
   }
 
