@@ -703,6 +703,10 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.option-row-sound {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .option-button,
 .play-button {
   border: 0;
@@ -1481,6 +1485,12 @@ button {
     margin-top: 0.4rem;
   }
 
+  #soundOptions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+  }
+
   .option-row-featured {
     grid-template-columns: 1fr;
     margin-top: 0.45rem;
@@ -1496,7 +1506,8 @@ button {
 
   #timerOptions .option-button,
   #universeOptions .option-button,
-  #energyOptions .option-button {
+  #energyOptions .option-button,
+  #soundOptions .option-button {
     min-height: 2.45rem;
     font-size: 0.72rem;
     padding: 0.42rem 0.16rem;

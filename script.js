@@ -163,6 +163,10 @@ const energyConfigs = {
     specialBurstScale: 1.25
   }
 };
+const soundConfigs = {
+  off: { volume: 0 },
+  soft: { volume: 0.16 }
+};
 const blockedGameplayKeyCodes = new Set([
   "MetaLeft", "MetaRight", "OSLeft", "OSRight", "Super", "Hyper", "Fn",
   "ContextMenu", "Escape", "PrintScreen", "ScrollLock", "Pause",
@@ -231,12 +235,15 @@ let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
+let audioContext = null;
+let lastTapSoundAt = 0;
 const state = {
   isPlaying: false,
   speedMode: "normal",
   visualMode: "normal",
   universeMode: "surprise",
   energyMode: "normal",
+  soundMode: "off",
   timerMode: "10",
   sessionEndsAt: null,
   remainingSessionMs: null,
@@ -280,7 +287,8 @@ const menuGrid = [
   [0, 1, 2, 3],
   [4, 5, 6, 7],
   [8, 9, 10],
-  [11]
+  [11, 12],
+  [13]
 ];
 const gamepadConfig = {
   deadzone: 0.24,
@@ -307,6 +315,9 @@ function loadSavedSettings() {
     if (saved.energyMode && energyConfigs[saved.energyMode]) {
       state.energyMode = saved.energyMode;
     }
+    if (saved.soundMode && soundConfigs[saved.soundMode]) {
+      state.soundMode = saved.soundMode;
+    }
   } catch (error) {
     console.error("Settings load error", error);
   }
@@ -319,7 +330,8 @@ function persistSettings() {
       JSON.stringify({
         timerMode: state.timerMode,
         universeMode: state.universeMode,
-        energyMode: state.energyMode
+        energyMode: state.energyMode,
+        soundMode: state.soundMode
       })
     );
   } catch (error) {
@@ -341,6 +353,95 @@ function getCurrentEmojiPool() {
 
 function getEnergyConfig() {
   return energyConfigs[state.energyMode] || energyConfigs.normal;
+}
+
+function getSoundConfig() {
+  return soundConfigs[state.soundMode] || soundConfigs.off;
+}
+
+function ensureAudioContext() {
+  if (state.soundMode === "off") {
+    return null;
+  }
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  if (!audioContext && navigator.userActivation && !navigator.userActivation.isActive) {
+    return null;
+  }
+
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+  }
+
+  if (audioContext.state === "suspended") {
+    audioContext.resume().catch(() => {});
+  }
+
+  return audioContext;
+}
+
+function playTone(frequency, startDelay, duration, gain = 1, type = "sine") {
+  const context = ensureAudioContext();
+  if (!context) {
+    return;
+  }
+
+  const volume = getSoundConfig().volume;
+  if (!volume) {
+    return;
+  }
+
+  const oscillator = context.createOscillator();
+  const gainNode = context.createGain();
+  const startAt = context.currentTime + startDelay;
+  const endAt = startAt + duration;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  gainNode.gain.setValueAtTime(0.0001, startAt);
+  gainNode.gain.exponentialRampToValueAtTime(Math.max(volume * gain, 0.0001), startAt + 0.018);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, endAt);
+  oscillator.connect(gainNode);
+  gainNode.connect(context.destination);
+  oscillator.start(startAt);
+  oscillator.stop(endAt + 0.02);
+}
+
+function playTapSound() {
+  if (state.soundMode === "off") {
+    return;
+  }
+
+  const now = performance.now();
+  if (now - lastTapSoundAt < 95) {
+    return;
+  }
+
+  lastTapSoundAt = now;
+  const baseFrequency = state.energyMode === "party" ? 620 : 520;
+  playTone(baseFrequency + randomBetween(-35, 40), 0, 0.07, 0.55, "sine");
+  playTone(baseFrequency * 1.5, 0.025, 0.055, 0.22, "triangle");
+}
+
+function playSpecialSound(kind) {
+  if (state.soundMode === "off") {
+    return;
+  }
+
+  const patterns = {
+    hero: [440, 660, 880],
+    rainbow: [523, 659, 784, 1046],
+    "super-rain": [740, 620, 520],
+    parade: [392, 523, 392, 659],
+    party: [523, 659, 784, 1046]
+  };
+  const notes = patterns[kind] || [520, 680, 840];
+  notes.forEach((frequency, index) => {
+    playTone(frequency, index * 0.075, 0.13, 0.42, index % 2 ? "triangle" : "sine");
+  });
 }
 
 function chooseAutoVisualMode() {
@@ -854,6 +955,7 @@ function startSpecialEvent(kind, x, y) {
   state.interactionsSinceSpecial = 0;
   scheduleNextSpecialEvent(Date.now());
   applyModeClasses();
+  playSpecialSound(kind);
 
   let duration = 3200;
   if (kind === "hero") {
@@ -1294,12 +1396,15 @@ function setMenuFocusForState() {
     "energy:gentle": 8,
     "energy:normal": 9,
     "energy:party": 10,
-    play: 11
+    "sound:off": 11,
+    "sound:soft": 12,
+    play: 13
   };
   gamepadState.menuFocusIndex =
     focusMap[`timer:${state.timerMode}`] ??
     focusMap[`universe:${state.universeMode}`] ??
     focusMap[`energy:${state.energyMode}`] ??
+    focusMap[`sound:${state.soundMode}`] ??
     focusMap.play;
   updateMenuFocus();
 }
@@ -1447,6 +1552,7 @@ function handlePointer(event) {
   const pointY = event.clientY;
 
   hideHint();
+  playTapSound();
   triggerPlayModeBursts(pointX, pointY);
   maybeTriggerSpecialEvent(pointX, pointY);
 }
@@ -1475,6 +1581,7 @@ function nextKeyboardPoint() {
 function triggerKeyboardBurst() {
   const point = nextKeyboardPoint();
   hideHint();
+  playTapSound();
   triggerPlayModeBursts(point.x, point.y);
   maybeTriggerSpecialEvent(point.x, point.y);
 }
@@ -1555,7 +1662,8 @@ function syncOptionButtons() {
     const isActive =
       (group === "timer" && value === state.timerMode) ||
       (group === "universe" && value === state.universeMode) ||
-      (group === "energy" && value === state.energyMode);
+      (group === "energy" && value === state.energyMode) ||
+      (group === "sound" && value === state.soundMode);
 
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
@@ -1697,6 +1805,13 @@ function handleOptionClick(event) {
   if (group === "energy" && energyConfigs[value]) {
     state.energyMode = value;
     scheduleNextSpecialEvent();
+  }
+  if (group === "sound" && soundConfigs[value]) {
+    state.soundMode = value;
+    if (value === "soft") {
+      playTone(660, 0, 0.09, 0.35, "sine");
+      playTone(880, 0.07, 0.1, 0.28, "triangle");
+    }
   }
 
   syncOptionButtons();
