@@ -190,6 +190,10 @@ const energyLabels = {
   normal: "normal",
   party: "fete"
 };
+const soundLabels = {
+  off: "silence",
+  soft: "doux"
+};
 const idleNudgeDelays = {
   gentle: 11000,
   normal: 8500,
@@ -249,6 +253,7 @@ const parentExitAction = document.getElementById("parentExitAction");
 const parentTimerSummary = document.getElementById("parentTimerSummary");
 const parentUniverseSummary = document.getElementById("parentUniverseSummary");
 const parentEnergySummary = document.getElementById("parentEnergySummary");
+const parentSoundSummary = document.getElementById("parentSoundSummary");
 const lockScreen = document.getElementById("lockScreen");
 const endingScreen = document.getElementById("endingScreen");
 const endingCelebration = document.getElementById("endingCelebration");
@@ -1321,6 +1326,7 @@ function updateParentSummary() {
   parentTimerSummary.textContent = timerLabels[state.timerMode] || state.timerMode;
   parentUniverseSummary.textContent = universeLabels[state.universeMode] || state.universeMode;
   parentEnergySummary.textContent = energyLabels[state.energyMode] || state.energyMode;
+  parentSoundSummary.textContent = soundLabels[state.soundMode] || state.soundMode;
 }
 
 function applyModeClasses() {

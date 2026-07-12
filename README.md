@@ -35,6 +35,8 @@ Le navigateur garde automatiquement:
 - rythme
 - son
 
+Ces reglages sont visibles dans le panneau parent pendant une partie.
+
 ## Rythmes enfant
 
 - `doux`: animations plus calmes, effets plus espaces
