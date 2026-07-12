@@ -16,6 +16,7 @@ Puis ouvrir `http://localhost:8000`.
 - passe en plein ecran quand on lance la partie
 - propose un retour parent protege
 - disperse les emojis sur l'ecran quand la meme zone est tapee en boucle
+- relance doucement l'attention si aucune interaction n'arrive pendant la partie
 - garde les emojis en local dans `assets/twemoji`
 - fonctionne offline une fois chargee via le service worker
 

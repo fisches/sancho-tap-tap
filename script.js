@@ -167,6 +167,11 @@ const soundConfigs = {
   off: { volume: 0 },
   soft: { volume: 0.16 }
 };
+const idleNudgeDelays = {
+  gentle: 11000,
+  normal: 8500,
+  party: 6500
+};
 const blockedGameplayKeyCodes = new Set([
   "MetaLeft", "MetaRight", "OSLeft", "OSRight", "Super", "Hyper", "Fn",
   "ContextMenu", "Escape", "PrintScreen", "ScrollLock", "Pause",
@@ -236,6 +241,8 @@ let menuComboSource = null;
 let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
+let idleNudgeTimeoutId = null;
+let lastGameplayActivityAt = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
 let pointerTapZone = "";
 let pointerTapZoneCount = 0;
@@ -1037,6 +1044,55 @@ function triggerCoverageEcho(echoPoint) {
   }, echoPoint.delay);
 }
 
+function getIdleNudgeDelay() {
+  const baseDelay = idleNudgeDelays[state.energyMode] || idleNudgeDelays.normal;
+  return getResolvedPerformanceMode() === "normal" ? baseDelay : baseDelay + 2500;
+}
+
+function clearIdleNudge() {
+  if (idleNudgeTimeoutId) {
+    window.clearTimeout(idleNudgeTimeoutId);
+    idleNudgeTimeoutId = null;
+  }
+}
+
+function spawnIdleNudge() {
+  if (!canInteractWithGameplay() || state.specialEventActive) {
+    scheduleIdleNudge();
+    return;
+  }
+
+  const point = nextDistributedPoint();
+  spawnBurst(
+    clamp(point.x + randomBetween(-24, 24), 42, window.innerWidth - 42),
+    clamp(point.y + randomBetween(-22, 22), 42, window.innerHeight - 42),
+    { sizeMultiplier: 0.98 }
+  );
+  scheduleIdleNudge();
+}
+
+function scheduleIdleNudge() {
+  clearIdleNudge();
+  if (!canInteractWithGameplay()) {
+    return;
+  }
+
+  const delay = getIdleNudgeDelay();
+  idleNudgeTimeoutId = window.setTimeout(() => {
+    idleNudgeTimeoutId = null;
+    if (Date.now() - lastGameplayActivityAt < delay) {
+      scheduleIdleNudge();
+      return;
+    }
+    spawnIdleNudge();
+  }, delay);
+}
+
+function recordGameplayActivity() {
+  lastGameplayActivityAt = Date.now();
+  scheduleIdleNudge();
+}
+
 function triggerPlayModeBursts(x, y, options = {}) {
   const coverageEcho = options.source === "pointer" ? getPointerCoverageEcho(x, y) : null;
   state.visualMode = chooseAutoVisualMode();
@@ -1293,6 +1349,7 @@ function stopAllInteractiveInput() {
   releaseAllKeys();
   stopGamepadSpawn();
   clearMenuReturnCombo();
+  clearIdleNudge();
 }
 
 function canInteractWithGameplay() {
@@ -1306,6 +1363,7 @@ function isGamepadBurstPressed(gamepad) {
 function triggerGamepadBurst() {
   const point = nextKeyboardPoint();
   hideHint();
+  recordGameplayActivity();
   triggerPlayModeBursts(point.x, point.y);
   maybeTriggerSpecialEvent(point.x, point.y);
 }
@@ -1362,6 +1420,8 @@ function closeParentPanel() {
     resumeSpecialCooldown();
     startSessionTimer();
     startSpecialProgressLoop();
+    lastGameplayActivityAt = Date.now();
+    scheduleIdleNudge();
   }
 }
 
@@ -1649,6 +1709,7 @@ function handlePointer(event) {
 
   hideHint();
   playTapSound();
+  recordGameplayActivity();
   triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
   maybeTriggerSpecialEvent(pointX, pointY);
 }
@@ -1678,6 +1739,7 @@ function triggerKeyboardBurst() {
   const point = nextKeyboardPoint();
   hideHint();
   playTapSound();
+  recordGameplayActivity();
   triggerPlayModeBursts(point.x, point.y);
   maybeTriggerSpecialEvent(point.x, point.y);
 }
@@ -1783,6 +1845,7 @@ function showMenu() {
   clearPrimeTimeouts();
   clearSessionTimer();
   stopSpecialProgressLoop();
+  clearIdleNudge();
   if (endingTimeoutId) {
     window.clearTimeout(endingTimeoutId);
     endingTimeoutId = null;
@@ -1815,6 +1878,7 @@ function endSessionSoftly() {
   clearSessionTimer();
   stopSpecialProgressLoop();
   stopAllInteractiveInput();
+  clearIdleNudge();
   spawnEndingCelebration();
   playground.classList.add("is-ending");
   endingScreen.removeAttribute("aria-hidden");
@@ -1886,6 +1950,8 @@ function startSessionCore() {
   applyModeClasses();
   startSpecialProgressLoop();
   resetGamepadCursor();
+  lastGameplayActivityAt = Date.now();
+  scheduleIdleNudge();
   startSessionTimer();
   primeFirstView();
 }
@@ -2013,6 +2079,8 @@ async function handleResumeAction() {
     resumeSpecialCooldown();
     startSessionTimer();
     startSpecialProgressLoop();
+    lastGameplayActivityAt = Date.now();
+    scheduleIdleNudge();
   }
 }
 
