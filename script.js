@@ -1096,7 +1096,7 @@ function maybeTriggerSpecialEvent(x, y) {
   startSpecialEvent(state.nextSpecialKind || chooseSpecialEventKind(), x, y);
 }
 
-function getPointerCoverageEcho(x, y) {
+function getPointerCoveragePlan(x, y) {
   const now = Date.now();
   const zoneColumn = Math.floor(clamp(x / Math.max(window.innerWidth, 1), 0, 0.999) * 4);
   const zoneRow = Math.floor(clamp(y / Math.max(window.innerHeight, 1), 0, 0.999) * 3);
@@ -1113,11 +1113,18 @@ function getPointerCoverageEcho(x, y) {
     return null;
   }
 
-  const point = nextDistributedPoint();
+  const mainPoint = nextDistributedPoint();
+  const echoPoint = nextDistributedPoint();
   return {
-    x: clamp(point.x + randomBetween(-34, 34), 36, window.innerWidth - 36),
-    y: clamp(point.y + randomBetween(-30, 30), 36, window.innerHeight - 36),
-    delay: pointerTapZoneCount % 2 === 0 ? 70 : 130
+    main: {
+      x: clamp(mainPoint.x + randomBetween(-34, 34), 36, window.innerWidth - 36),
+      y: clamp(mainPoint.y + randomBetween(-30, 30), 36, window.innerHeight - 36)
+    },
+    echo: {
+      x: clamp(echoPoint.x + randomBetween(-34, 34), 36, window.innerWidth - 36),
+      y: clamp(echoPoint.y + randomBetween(-30, 30), 36, window.innerHeight - 36),
+      delay: pointerTapZoneCount % 2 === 0 ? 70 : 130
+    }
   };
 }
 
@@ -1183,13 +1190,15 @@ function recordGameplayActivity() {
 }
 
 function triggerPlayModeBursts(x, y, options = {}) {
-  const coverageEcho = options.source === "pointer" ? getPointerCoverageEcho(x, y) : null;
+  const coveragePlan = options.source === "pointer" ? getPointerCoveragePlan(x, y) : null;
+  const primaryX = coveragePlan?.main?.x ?? x;
+  const primaryY = coveragePlan?.main?.y ?? y;
   state.visualMode = chooseAutoVisualMode();
   applyModeClasses();
 
   if (state.visualMode === "rain") {
-    const originX = clamp(x + (Math.random() * 240 - 120), 36, window.innerWidth - 36);
-    const originY = clamp(y - 90 - Math.random() * 150, 26, Math.max(y - 22, 26));
+    const originX = clamp(primaryX + (Math.random() * 240 - 120), 36, window.innerWidth - 36);
+    const originY = clamp(primaryY - 90 - Math.random() * 150, 26, Math.max(primaryY - 22, 26));
     spawnBurst(originX, originY, { sizeMultiplier: 0.92, variant: "rain" });
     const extraBursts = Math.max(getPerformanceProfile().rainBursts, 2);
     for (let index = 0; index < extraBursts; index += 1) {
@@ -1211,7 +1220,7 @@ function triggerPlayModeBursts(x, y, options = {}) {
   }
 
   if (state.visualMode === "giant") {
-    spawnBurst(x, y, { sizeMultiplier: 1.85 });
+    spawnBurst(primaryX, primaryY, { sizeMultiplier: 1.85 });
     if (getResolvedPerformanceMode() === "normal") {
       window.setTimeout(() => {
         if (canInteractWithGameplay()) {
@@ -1227,8 +1236,8 @@ function triggerPlayModeBursts(x, y, options = {}) {
     return;
   }
 
-  spawnBurst(x, y);
-  triggerCoverageEcho(coverageEcho);
+  spawnBurst(primaryX, primaryY);
+  triggerCoverageEcho(coveragePlan?.echo);
 }
 
 function hideHint() {
