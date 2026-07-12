@@ -15,6 +15,7 @@ Puis ouvrir `http://localhost:8000`.
 - fonctionne a la souris, au tactile, au clavier et a la manette
 - passe en plein ecran quand on lance la partie
 - propose un retour parent protege
+- disperse les emojis sur l'ecran quand la meme zone est tapee en boucle
 - garde les emojis en local dans `assets/twemoji`
 - fonctionne offline une fois chargee via le service worker
 

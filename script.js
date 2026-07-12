@@ -180,6 +180,7 @@ const distributedPointCells = [
   [0.24, 0.48], [0.76, 0.48],
   [0.18, 0.78], [0.5, 0.82], [0.82, 0.78]
 ];
+const pointerRepeatWindowMs = 2600;
 const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
@@ -236,6 +237,9 @@ let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
+let pointerTapZone = "";
+let pointerTapZoneCount = 0;
+let lastPointerTapAt = 0;
 let audioContext = null;
 let lastTapSoundAt = 0;
 const state = {
@@ -996,7 +1000,45 @@ function maybeTriggerSpecialEvent(x, y) {
   startSpecialEvent(state.nextSpecialKind || chooseSpecialEventKind(), x, y);
 }
 
-function triggerPlayModeBursts(x, y) {
+function getPointerCoverageEcho(x, y) {
+  const now = Date.now();
+  const zoneColumn = Math.floor(clamp(x / Math.max(window.innerWidth, 1), 0, 0.999) * 4);
+  const zoneRow = Math.floor(clamp(y / Math.max(window.innerHeight, 1), 0, 0.999) * 3);
+  const zone = `${zoneColumn}:${zoneRow}`;
+  if (zone === pointerTapZone && now - lastPointerTapAt < pointerRepeatWindowMs) {
+    pointerTapZoneCount += 1;
+  } else {
+    pointerTapZone = zone;
+    pointerTapZoneCount = 1;
+  }
+  lastPointerTapAt = now;
+
+  if (pointerTapZoneCount < 3) {
+    return null;
+  }
+
+  const point = nextDistributedPoint();
+  return {
+    x: clamp(point.x + randomBetween(-34, 34), 36, window.innerWidth - 36),
+    y: clamp(point.y + randomBetween(-30, 30), 36, window.innerHeight - 36),
+    delay: pointerTapZoneCount % 2 === 0 ? 70 : 130
+  };
+}
+
+function triggerCoverageEcho(echoPoint) {
+  if (!echoPoint || getResolvedPerformanceMode() !== "normal") {
+    return;
+  }
+
+  window.setTimeout(() => {
+    if (canInteractWithGameplay()) {
+      spawnBurst(echoPoint.x, echoPoint.y, { sizeMultiplier: 0.86 });
+    }
+  }, echoPoint.delay);
+}
+
+function triggerPlayModeBursts(x, y, options = {}) {
+  const coverageEcho = options.source === "pointer" ? getPointerCoverageEcho(x, y) : null;
   state.visualMode = chooseAutoVisualMode();
   applyModeClasses();
 
@@ -1041,6 +1083,7 @@ function triggerPlayModeBursts(x, y) {
   }
 
   spawnBurst(x, y);
+  triggerCoverageEcho(coverageEcho);
 }
 
 function hideHint() {
@@ -1058,6 +1101,12 @@ function resetHint() {
 function clearBursts() {
   emojiStage.replaceChildren();
   burstCount = 0;
+}
+
+function resetPointerCoverage() {
+  pointerTapZone = "";
+  pointerTapZoneCount = 0;
+  lastPointerTapAt = 0;
 }
 
 function clearEndingCelebration() {
@@ -1600,7 +1649,7 @@ function handlePointer(event) {
 
   hideHint();
   playTapSound();
-  triggerPlayModeBursts(pointX, pointY);
+  triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
   maybeTriggerSpecialEvent(pointX, pointY);
 }
 
@@ -1741,6 +1790,7 @@ function showMenu() {
   clearEndingCelebration();
   resetHint();
   clearBursts();
+  resetPointerCoverage();
   playground.classList.remove("is-playing");
   playground.classList.remove("is-ending");
   playground.classList.remove("is-paused");
@@ -1821,6 +1871,7 @@ function startSessionCore() {
   clearPrimeTimeouts();
   clearBursts();
   clearEndingCelebration();
+  resetPointerCoverage();
   resetHint();
   playground.classList.add("is-playing");
   playground.classList.remove("is-ending");
