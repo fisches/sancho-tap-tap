@@ -102,7 +102,6 @@ const randomEmojiPool = [
 ];
 
 const sparklePools = ["✨", "⭐", "💫", "🫧", "🌟", "💛"];
-const specialHeroPool = ["🦄", "👑", "🦖", "🐬", "🚀", "👸", "🤖", "🐲", "🌈", "💫"];
 const specialEventKinds = ["hero", "rainbow", "super-rain"];
 const specialEventConfig = {
   minCooldownMs: 22000,
@@ -194,6 +193,8 @@ const state = {
   lastSpecialKind: "",
   lastSpecialScheduledAt: 0,
   nextSpecialAt: 0,
+  specialCooldownTotalMs: 1,
+  pausedSpecialCooldownRemainingMs: null,
   interactionsSinceSpecial: 0
 };
 const gamepadState = {
@@ -286,8 +287,11 @@ function chooseSpecialEventKind() {
 }
 
 function scheduleNextSpecialEvent(baseTime = Date.now()) {
+  const cooldownMs = randomBetween(specialEventConfig.minCooldownMs, specialEventConfig.maxCooldownMs);
   state.lastSpecialScheduledAt = baseTime;
-  state.nextSpecialAt = baseTime + randomBetween(specialEventConfig.minCooldownMs, specialEventConfig.maxCooldownMs);
+  state.specialCooldownTotalMs = cooldownMs;
+  state.pausedSpecialCooldownRemainingMs = null;
+  state.nextSpecialAt = baseTime + cooldownMs;
   updateSpecialProgress();
 }
 
@@ -296,12 +300,39 @@ function updateSpecialProgress() {
     return;
   }
 
-  const totalMs = Math.max(state.nextSpecialAt - state.lastSpecialScheduledAt, 1);
+  const totalMs = Math.max(state.specialCooldownTotalMs, 1);
   const elapsedMs = Date.now() - state.lastSpecialScheduledAt;
+  const timeProgress = clamp(elapsedMs / totalMs, 0, 1);
+  const interactionProgress = clamp(
+    state.interactionsSinceSpecial / specialEventConfig.minInteractions,
+    0,
+    1
+  );
   const progress = state.specialEventActive || !canInteractWithGameplay()
     ? 0
-    : clamp(elapsedMs / totalMs, 0, 1);
+    : Math.min(timeProgress, interactionProgress);
   specialProgress.style.setProperty("--special-progress", progress.toFixed(3));
+}
+
+function pauseSpecialCooldown() {
+  if (!state.nextSpecialAt) {
+    return;
+  }
+
+  state.pausedSpecialCooldownRemainingMs = Math.max(state.nextSpecialAt - Date.now(), 0);
+}
+
+function resumeSpecialCooldown() {
+  if (state.pausedSpecialCooldownRemainingMs === null) {
+    return;
+  }
+
+  const remainingMs = state.pausedSpecialCooldownRemainingMs;
+  const elapsedMs = Math.max(state.specialCooldownTotalMs - remainingMs, 0);
+  state.lastSpecialScheduledAt = Date.now() - elapsedMs;
+  state.nextSpecialAt = Date.now() + remainingMs;
+  state.pausedSpecialCooldownRemainingMs = null;
+  updateSpecialProgress();
 }
 
 function startSpecialProgressLoop() {
@@ -470,12 +501,6 @@ function createSpecialEmojiNode(x, y, emojiChar, className, scale = 1) {
   return emoji;
 }
 
-function setTravelPath(node, startX, endX, y) {
-  node.style.setProperty("--travel-start-x", `${startX.toFixed(2)}px`);
-  node.style.setProperty("--travel-end-x", `${endX.toFixed(2)}px`);
-  node.style.setProperty("--travel-y", `${y.toFixed(2)}px`);
-}
-
 function setWanderPath(node, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY) {
   node.style.setProperty("--wander-start-x", `${startX.toFixed(2)}px`);
   node.style.setProperty("--wander-start-y", `${startY.toFixed(2)}px`);
@@ -502,20 +527,6 @@ function interpolateWanderPoint(points, progress) {
     x: start.x + (end.x - start.x) * localT,
     y: start.y + (end.y - start.y) * localT
   };
-}
-
-function createSvgNode(tagName) {
-  return document.createElementNS("http://www.w3.org/2000/svg", tagName);
-}
-
-function cubicBezierPoint(start, control1, control2, end, t) {
-  const inverse = 1 - t;
-  return (
-    inverse ** 3 * start +
-    3 * inverse ** 2 * t * control1 +
-    3 * inverse * t ** 2 * control2 +
-    t ** 3 * end
-  );
 }
 
 function spawnHeroSpecial(x, y) {
@@ -691,10 +702,12 @@ function maybeTriggerSpecialEvent(x, y) {
 
   state.interactionsSinceSpecial += 1;
   if (state.interactionsSinceSpecial < specialEventConfig.minInteractions) {
+    updateSpecialProgress();
     return;
   }
 
   if (Date.now() < state.nextSpecialAt) {
+    updateSpecialProgress();
     return;
   }
 
@@ -933,6 +946,7 @@ function openParentPanel() {
   }
 
   stopAllInteractiveInput();
+  pauseSpecialCooldown();
   endSpecialEvent();
   pauseSessionTimer();
   state.isParentPanelOpen = true;
@@ -964,6 +978,7 @@ function closeParentPanel() {
     }
 
     hideResumeScreen();
+    resumeSpecialCooldown();
     startSessionTimer();
     startSpecialProgressLoop();
   }
@@ -1521,6 +1536,7 @@ function pauseForInterruption(title, text) {
   }
 
   stopAllInteractiveInput();
+  pauseSpecialCooldown();
   endSpecialEvent();
   pauseSessionTimer();
   showResumeScreen(title, text);
@@ -1572,6 +1588,7 @@ async function handleResumeAction() {
   }
 
   if (state.isPlaying && !state.isEnding) {
+    resumeSpecialCooldown();
     startSessionTimer();
     startSpecialProgressLoop();
   }

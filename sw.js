@@ -1,5 +1,5 @@
-const SHELL_CACHE = "sancho-tap-tap-shell-v2";
-const RUNTIME_CACHE = "sancho-tap-tap-runtime-v2";
+const SHELL_CACHE = "sancho-tap-tap-shell-v3";
+const RUNTIME_CACHE = "sancho-tap-tap-runtime-v3";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -8,6 +8,9 @@ const APP_SHELL = [
   "./manifest.webmanifest",
   "./assets/icon.svg"
 ];
+const APP_SHELL_PATHS = new Set(
+  APP_SHELL.map((path) => new URL(path, self.location.href).pathname)
+);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -36,6 +39,23 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  if (APP_SHELL_PATHS.has(url.pathname)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (!response || response.status !== 200) {
+            return response;
+          }
+
+          const copy = response.clone();
+          caches.open(SHELL_CACHE).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 
