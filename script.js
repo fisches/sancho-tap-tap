@@ -744,6 +744,38 @@ function createSpecialEmojiNode(x, y, emojiChar, className, scale = 1) {
   return emoji;
 }
 
+function createHeroPrintNode(x, y, emojiChar, delay, scale = 1) {
+  const print = createEmoji(x, y, emojiChar, "main");
+  print.classList.add("special-hero-print");
+  print.style.animationDuration = "";
+  print.style.animationDelay = `${delay}ms`;
+  print.style.setProperty("--burst-scale", scale.toFixed(2));
+  return print;
+}
+
+function getHeroEmojiPool() {
+  if (state.universeMode === "animals") {
+    return ["🐶", "🐱", "🦊", "🐸", "🦁", "🦒", "🐘", "🦄"];
+  }
+  if (state.universeMode === "vehicles") {
+    return ["🚗", "🚕", "🚙", "🏎️", "🚜", "🚒", "🚀"];
+  }
+  if (state.universeMode === "magic") {
+    return ["🦄", "🧚", "👑", "🪄", "🔮", "🌙"];
+  }
+  return ["🦄", "🐬", "🐘", "🦒", "🦁", "🦖", "🚀"];
+}
+
+function getHeroPrintEmoji() {
+  if (state.universeMode === "vehicles") {
+    return "💨";
+  }
+  if (state.universeMode === "magic") {
+    return "✨";
+  }
+  return "🌟";
+}
+
 function setWanderPath(node, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY) {
   node.style.setProperty("--wander-start-x", `${startX.toFixed(2)}px`);
   node.style.setProperty("--wander-start-y", `${startY.toFixed(2)}px`);
@@ -776,17 +808,19 @@ function spawnHeroSpecial(x, y) {
   const exitLeft = Math.random() > 0.5;
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const sidePadding = Math.max(width * 0.08, 72);
+  const sidePadding = Math.max(width * 0.06, 56);
+  const safeTop = Math.max(height * 0.16, 76);
+  const safeBottom = Math.max(height - Math.max(height * 0.14, 78), safeTop + 80);
   const startX = exitLeft ? width + sidePadding : -sidePadding;
   const endX = exitLeft ? -sidePadding : width + sidePadding;
-  const startY = clamp(y + randomBetween(-height * 0.28, height * 0.18), height * 0.16, height * 0.82);
-  const mid1X = exitLeft ? width * 0.74 : width * 0.26;
-  const mid1Y = clamp(height * randomBetween(0.18, 0.32), 74, height - 74);
-  const mid2X = width * 0.5;
-  const mid2Y = clamp(height * randomBetween(0.4, 0.56), 74, height - 74);
-  const mid3X = exitLeft ? width * 0.24 : width * 0.76;
-  const mid3Y = clamp(height * randomBetween(0.68, 0.82), 74, height - 74);
-  const endY = clamp(height * randomBetween(0.28, 0.82), 74, height - 74);
+  const startY = clamp(y + randomBetween(-height * 0.18, height * 0.16), safeTop, safeBottom);
+  const mid1X = exitLeft ? width * randomBetween(0.68, 0.78) : width * randomBetween(0.22, 0.32);
+  const mid1Y = clamp(startY + randomBetween(-height * 0.2, height * 0.16), safeTop, safeBottom);
+  const mid2X = width * randomBetween(0.44, 0.56);
+  const mid2Y = clamp(height * randomBetween(0.38, 0.62), safeTop, safeBottom);
+  const mid3X = exitLeft ? width * randomBetween(0.22, 0.34) : width * randomBetween(0.66, 0.78);
+  const mid3Y = clamp(mid2Y + randomBetween(-height * 0.18, height * 0.18), safeTop, safeBottom);
+  const endY = clamp(mid3Y + randomBetween(-height * 0.22, height * 0.22), safeTop, safeBottom);
   const wanderPoints = [
     { x: startX, y: startY },
     { x: mid1X, y: mid1Y },
@@ -795,14 +829,31 @@ function spawnHeroSpecial(x, y) {
     { x: endX, y: endY }
   ];
   const overlay = createSpecialOverlay("special-hero", width / 2, height / 2);
-  const heroEmoji = createSpecialEmojiNode(0, 0, pickRandom(["🦄", "🐬", "🐘", "🦒", "🦁"]), "special-hero-emoji", 2.85);
+  const heroScale = width < 520 ? 1.72 : 2.65;
+  const printScaleBase = width < 520 ? 0.34 : 0.42;
+  const heroEmoji = createSpecialEmojiNode(0, 0, pickRandom(getHeroEmojiPool()), "special-hero-emoji", heroScale);
   setWanderPath(heroEmoji, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY);
 
   overlay.appendChild(heroEmoji);
+  const printCount = getResolvedPerformanceMode() === "normal" ? 7 : 4;
+  const printEmoji = getHeroPrintEmoji();
+  for (let index = 0; index < printCount; index += 1) {
+    const progress = (index + 1) / (printCount + 1);
+    const point = interpolateWanderPoint(wanderPoints, progress);
+    overlay.appendChild(
+      createHeroPrintNode(
+        clamp(point.x + randomBetween(-22, 22), 28, width - 28),
+        clamp(point.y + randomBetween(-18, 18), 28, height - 28),
+        printEmoji,
+        540 + index * 620,
+        printScaleBase + Math.random() * 0.12
+      )
+    );
+  }
   specialStage.replaceChildren(overlay);
 
-  const heroDuration = 6500;
-  const burstCountForHero = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 16 : 8);
+  const heroDuration = 7600;
+  const burstCountForHero = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 18 : 9);
   for (let index = 0; index < burstCountForHero; index += 1) {
     scheduleSpecialTask(() => {
       const progress = index / Math.max(burstCountForHero - 1, 1);

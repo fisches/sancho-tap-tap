@@ -1130,7 +1130,7 @@ button {
 }
 
 .special-hero-emoji {
-  animation: specialHeroSnake 6.5s ease-in-out forwards;
+  animation: specialHeroSnake 7.6s ease-in-out forwards;
   width: clamp(5.3rem, 12.5vmin, 7.6rem);
   height: clamp(5.3rem, 12.5vmin, 7.6rem);
   padding: 0.38rem;
@@ -1144,6 +1144,15 @@ button {
     drop-shadow(0 1rem 1.6rem rgba(36, 64, 75, 0.22));
   object-fit: contain;
   z-index: 1;
+}
+
+.special-hero-print {
+  width: clamp(1.4rem, 3.6vmin, 2.25rem);
+  height: clamp(1.4rem, 3.6vmin, 2.25rem);
+  opacity: 0;
+  animation: specialHeroPrint 1.9s ease-out forwards;
+  filter: drop-shadow(0 0.45rem 0.85rem rgba(36, 64, 75, 0.16));
+  z-index: 0;
 }
 
 .special-rainbow-ribbon {
@@ -1438,6 +1447,25 @@ button {
   100% {
     opacity: 0;
     transform: translate(var(--wander-end-x), var(--wander-end-y)) translate(-50%, -68%) scale(calc(0.92 * var(--burst-scale, 1))) rotate(0deg);
+  }
+}
+
+@keyframes specialHeroPrint {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(calc(0.2 * var(--size-scale, 1) * var(--burst-scale, 1))) rotate(-10deg);
+  }
+  22% {
+    opacity: 0.72;
+    transform: translate(-50%, -50%) scale(calc(0.38 * var(--size-scale, 1) * var(--burst-scale, 1))) rotate(2deg);
+  }
+  74% {
+    opacity: 0.52;
+    transform: translate(-50%, -50%) scale(calc(0.34 * var(--size-scale, 1) * var(--burst-scale, 1))) rotate(8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(calc(0.28 * var(--size-scale, 1) * var(--burst-scale, 1))) rotate(14deg);
   }
 }
 
