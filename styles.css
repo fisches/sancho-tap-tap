@@ -699,6 +699,10 @@ button {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.option-row-energy {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .option-button,
 .play-button {
   border: 0;
@@ -978,6 +982,14 @@ button {
   border: 0.45rem dashed rgba(255, 255, 255, 0.16);
   opacity: 0.85;
   animation: giantHalo 6s linear infinite;
+}
+
+.playground.is-energy-gentle .emoji-stage {
+  filter: saturate(0.9);
+}
+
+.playground.is-energy-party .emoji-stage {
+  filter: saturate(1.12);
 }
 
 .playground.is-special-active .special-stage {
@@ -1463,6 +1475,12 @@ button {
     margin-top: 0.4rem;
   }
 
+  #energyOptions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+  }
+
   .option-row-featured {
     grid-template-columns: 1fr;
     margin-top: 0.45rem;
@@ -1477,7 +1495,8 @@ button {
   }
 
   #timerOptions .option-button,
-  #universeOptions .option-button {
+  #universeOptions .option-button,
+  #energyOptions .option-button {
     min-height: 2.45rem;
     font-size: 0.72rem;
     padding: 0.42rem 0.16rem;

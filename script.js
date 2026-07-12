@@ -137,6 +137,32 @@ const specialEventConfig = {
   maxCooldownMs: 38000,
   minInteractions: 14
 };
+const energyConfigs = {
+  gentle: {
+    speedMode: "slow",
+    minCooldownMs: 34000,
+    maxCooldownMs: 54000,
+    minInteractions: 20,
+    visualThresholds: { normal: 0.68, rain: 0.92 },
+    specialBurstScale: 0.72
+  },
+  normal: {
+    speedMode: "normal",
+    minCooldownMs: 22000,
+    maxCooldownMs: 38000,
+    minInteractions: 14,
+    visualThresholds: { normal: 0.5, rain: 0.82 },
+    specialBurstScale: 1
+  },
+  party: {
+    speedMode: "fast",
+    minCooldownMs: 14000,
+    maxCooldownMs: 26000,
+    minInteractions: 9,
+    visualThresholds: { normal: 0.32, rain: 0.72 },
+    specialBurstScale: 1.25
+  }
+};
 const blockedGameplayKeyCodes = new Set([
   "MetaLeft", "MetaRight", "OSLeft", "OSRight", "Super", "Hyper", "Fn",
   "ContextMenu", "Escape", "PrintScreen", "ScrollLock", "Pause",
@@ -210,6 +236,7 @@ const state = {
   speedMode: "normal",
   visualMode: "normal",
   universeMode: "surprise",
+  energyMode: "normal",
   timerMode: "10",
   sessionEndsAt: null,
   remainingSessionMs: null,
@@ -252,7 +279,8 @@ const gamepadState = {
 const menuGrid = [
   [0, 1, 2, 3],
   [4, 5, 6, 7],
-  [8]
+  [8, 9, 10],
+  [11]
 ];
 const gamepadConfig = {
   deadzone: 0.24,
@@ -276,6 +304,9 @@ function loadSavedSettings() {
     if (saved.universeMode && universeConfigs[saved.universeMode]) {
       state.universeMode = saved.universeMode;
     }
+    if (saved.energyMode && energyConfigs[saved.energyMode]) {
+      state.energyMode = saved.energyMode;
+    }
   } catch (error) {
     console.error("Settings load error", error);
   }
@@ -287,7 +318,8 @@ function persistSettings() {
       storageKey,
       JSON.stringify({
         timerMode: state.timerMode,
-        universeMode: state.universeMode
+        universeMode: state.universeMode,
+        energyMode: state.energyMode
       })
     );
   } catch (error) {
@@ -307,12 +339,17 @@ function getCurrentEmojiPool() {
   return universeConfigs[state.universeMode]?.pool || randomEmojiPool;
 }
 
+function getEnergyConfig() {
+  return energyConfigs[state.energyMode] || energyConfigs.normal;
+}
+
 function chooseAutoVisualMode() {
   const roll = Math.random();
-  if (roll < 0.5) {
+  const thresholds = getEnergyConfig().visualThresholds;
+  if (roll < thresholds.normal) {
     return "normal";
   }
-  if (roll < 0.82) {
+  if (roll < thresholds.rain) {
     return "rain";
   }
   return "giant";
@@ -325,7 +362,8 @@ function chooseSpecialEventKind() {
 }
 
 function scheduleNextSpecialEvent(baseTime = Date.now()) {
-  const cooldownMs = randomBetween(specialEventConfig.minCooldownMs, specialEventConfig.maxCooldownMs);
+  const energyConfig = getEnergyConfig();
+  const cooldownMs = randomBetween(energyConfig.minCooldownMs, energyConfig.maxCooldownMs);
   state.lastSpecialScheduledAt = baseTime;
   state.specialCooldownTotalMs = cooldownMs;
   state.pausedSpecialCooldownRemainingMs = null;
@@ -354,7 +392,7 @@ function updateSpecialProgress() {
   const elapsedMs = Date.now() - state.lastSpecialScheduledAt;
   const timeProgress = clamp(elapsedMs / totalMs, 0, 1);
   const interactionProgress = clamp(
-    state.interactionsSinceSpecial / specialEventConfig.minInteractions,
+    state.interactionsSinceSpecial / getEnergyConfig().minInteractions,
     0,
     1
   );
@@ -416,7 +454,11 @@ function getPerformanceProfile() {
 }
 
 function getSpeedSetting() {
-  return speedSettings[state.speedMode];
+  return speedSettings[getEnergyConfig().speedMode] || speedSettings[state.speedMode] || speedSettings.normal;
+}
+
+function getSpecialBurstCount(baseCount) {
+  return Math.max(1, Math.round(baseCount * getEnergyConfig().specialBurstScale));
 }
 
 function getTimerDurationMs() {
@@ -609,7 +651,7 @@ function spawnHeroSpecial(x, y) {
   specialStage.replaceChildren(overlay);
 
   const heroDuration = 6500;
-  const burstCountForHero = getResolvedPerformanceMode() === "normal" ? 16 : 8;
+  const burstCountForHero = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 16 : 8);
   for (let index = 0; index < burstCountForHero; index += 1) {
     scheduleSpecialTask(() => {
       const progress = index / Math.max(burstCountForHero - 1, 1);
@@ -661,7 +703,7 @@ function spawnRainbowSpecial(x, y) {
 
   specialStage.replaceChildren(overlay);
 
-  const burstCountForRainbow = getResolvedPerformanceMode() === "normal" ? 8 : 4;
+  const burstCountForRainbow = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 8 : 4);
   for (let index = 0; index < burstCountForRainbow; index += 1) {
     scheduleSpecialTask(() => {
       const progress = (index + 1) / (burstCountForRainbow + 1);
@@ -690,7 +732,7 @@ function spawnSuperRainSpecial(x, y) {
   overlay.appendChild(cloudTwo);
   specialStage.replaceChildren(overlay);
 
-  const burstCountForRain = getResolvedPerformanceMode() === "normal" ? 16 : 8;
+  const burstCountForRain = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 16 : 8);
   for (let index = 0; index < burstCountForRain; index += 1) {
     scheduleSpecialTask(() => {
       const burstX = randomBetween(window.innerWidth * 0.08, window.innerWidth * 0.92);
@@ -735,7 +777,7 @@ function spawnParadeSpecial(x, y) {
   const height = window.innerHeight;
   const overlay = createSpecialOverlay("special-parade", width / 2, height / 2);
   const pool = getParadeEmojiPool();
-  const rows = getResolvedPerformanceMode() === "normal" ? 5 : 3;
+  const rows = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 5 : 3);
   const duration = 5200;
 
   for (let index = 0; index < rows; index += 1) {
@@ -773,7 +815,7 @@ function spawnPartySpecial(x, y) {
   overlay.appendChild(center);
   specialStage.replaceChildren(overlay);
 
-  const burstCountForParty = getResolvedPerformanceMode() === "normal" ? 14 : 7;
+  const burstCountForParty = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 14 : 7);
   for (let index = 0; index < burstCountForParty; index += 1) {
     scheduleSpecialTask(() => {
       const point = nextDistributedPoint();
@@ -838,7 +880,7 @@ function maybeTriggerSpecialEvent(x, y) {
   }
 
   state.interactionsSinceSpecial += 1;
-  if (state.interactionsSinceSpecial < specialEventConfig.minInteractions) {
+  if (state.interactionsSinceSpecial < getEnergyConfig().minInteractions) {
     updateSpecialProgress();
     return;
   }
@@ -995,6 +1037,8 @@ function applyModeClasses() {
   playground.classList.toggle("is-ultra-light", resolvedPerformanceMode === "ultra");
   playground.classList.toggle("is-rain-mode", state.visualMode === "rain");
   playground.classList.toggle("is-giant-mode", state.visualMode === "giant");
+  playground.classList.toggle("is-energy-gentle", state.energyMode === "gentle");
+  playground.classList.toggle("is-energy-party", state.energyMode === "party");
   playground.classList.toggle("is-special-active", state.specialEventActive);
   playground.classList.toggle("is-special-hero", state.specialEventKind === "hero");
   playground.classList.toggle("is-special-rainbow", state.specialEventKind === "rainbow");
@@ -1247,11 +1291,15 @@ function setMenuFocusForState() {
     "universe:animals": 5,
     "universe:vehicles": 6,
     "universe:magic": 7,
-    play: 8
+    "energy:gentle": 8,
+    "energy:normal": 9,
+    "energy:party": 10,
+    play: 11
   };
   gamepadState.menuFocusIndex =
     focusMap[`timer:${state.timerMode}`] ??
     focusMap[`universe:${state.universeMode}`] ??
+    focusMap[`energy:${state.energyMode}`] ??
     focusMap.play;
   updateMenuFocus();
 }
@@ -1506,7 +1554,8 @@ function syncOptionButtons() {
     const value = button.dataset.value;
     const isActive =
       (group === "timer" && value === state.timerMode) ||
-      (group === "universe" && value === state.universeMode);
+      (group === "universe" && value === state.universeMode) ||
+      (group === "energy" && value === state.energyMode);
 
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
@@ -1643,6 +1692,10 @@ function handleOptionClick(event) {
   }
   if (group === "universe" && universeConfigs[value]) {
     state.universeMode = value;
+    scheduleNextSpecialEvent();
+  }
+  if (group === "energy" && energyConfigs[value]) {
+    state.energyMode = value;
     scheduleNextSpecialEvent();
   }
 
