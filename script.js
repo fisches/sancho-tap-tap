@@ -1791,11 +1791,17 @@ function pollGamepads() {
     } else if (state.isPlaying) {
       handleGamepadGameplay(activeGamepad);
     } else {
-      handleGamepadMenuNavigation(menuHorizontal, menuVertical, primaryPressed);
-      gamepadState.previousButtons.primary = primaryPressed;
-      gamepadState.previousButtons.menu = Boolean(
-        activeGamepad.buttons[9]?.pressed || activeGamepad.buttons[8]?.pressed
-      );
+      const comboPressed = maybeStartGamepadMenuCombo(activeGamepad);
+      if (comboPressed) {
+        gamepadState.previousButtons.primary = false;
+        gamepadState.previousButtons.menu = true;
+      } else {
+        handleGamepadMenuNavigation(menuHorizontal, menuVertical, primaryPressed);
+        gamepadState.previousButtons.primary = primaryPressed;
+        gamepadState.previousButtons.menu = Boolean(
+          activeGamepad.buttons[9]?.pressed || activeGamepad.buttons[8]?.pressed
+        );
+      }
     }
   } else if (gamepadState.connected) {
     gamepadState.connected = false;
@@ -1865,6 +1871,12 @@ function triggerKeyboardBurst() {
 }
 
 function handleKeydown(event) {
+  if (isKeyboardMenuCombo(event)) {
+    event.preventDefault();
+    startKeyboardMenuCombo();
+    return;
+  }
+
   if (!state.isPlaying) {
     return;
   }
@@ -1891,11 +1903,6 @@ function handleKeydown(event) {
   }
 
   heldKeys.set(event.code, 0);
-
-  if (isKeyboardMenuCombo(event)) {
-    startKeyboardMenuCombo();
-    return;
-  }
 
   if (isModifierKey(event.code)) {
     return;
