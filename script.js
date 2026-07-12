@@ -102,7 +102,36 @@ const randomEmojiPool = [
 ];
 
 const sparklePools = ["✨", "⭐", "💫", "🫧", "🌟", "💛"];
-const specialEventKinds = ["hero", "rainbow", "super-rain"];
+const specialEventKinds = ["hero", "rainbow", "super-rain", "parade", "party"];
+const universeConfigs = {
+  surprise: {
+    pool: randomEmojiPool,
+    specialKinds: specialEventKinds,
+    cue: "✨"
+  },
+  animals: {
+    pool: animalEmojiPool,
+    specialKinds: ["hero", "parade", "super-rain"],
+    cue: "🐾"
+  },
+  vehicles: {
+    pool: vehicleEmojiPool,
+    specialKinds: ["parade", "rainbow", "super-rain"],
+    cue: "🏁"
+  },
+  magic: {
+    pool: magicEmojiPool,
+    specialKinds: ["rainbow", "party", "hero"],
+    cue: "🪄"
+  }
+};
+const specialEventCues = {
+  hero: "🐾",
+  rainbow: "🌈",
+  "super-rain": "☔",
+  parade: "🏁",
+  party: "🎉"
+};
 const specialEventConfig = {
   minCooldownMs: 22000,
   maxCooldownMs: 38000,
@@ -148,6 +177,7 @@ const gamepadStatus = document.getElementById("gamepadStatus");
 const gamepadCursor = document.getElementById("gamepadCursor");
 const sessionTimer = document.getElementById("sessionTimer");
 const specialProgress = document.getElementById("specialProgress");
+const specialProgressCue = document.getElementById("specialProgressCue");
 const resumeScreen = document.getElementById("resumeScreen");
 const resumeTitle = document.getElementById("resumeTitle");
 const resumeText = document.getElementById("resumeText");
@@ -179,6 +209,7 @@ const state = {
   isPlaying: false,
   speedMode: "normal",
   visualMode: "normal",
+  universeMode: "surprise",
   timerMode: "10",
   sessionEndsAt: null,
   remainingSessionMs: null,
@@ -191,6 +222,7 @@ const state = {
   specialEventActive: false,
   specialEventKind: "",
   lastSpecialKind: "",
+  nextSpecialKind: "",
   lastSpecialScheduledAt: 0,
   nextSpecialAt: 0,
   specialCooldownTotalMs: 1,
@@ -219,7 +251,8 @@ const gamepadState = {
 };
 const menuGrid = [
   [0, 1, 2, 3],
-  [4]
+  [4, 5, 6, 7],
+  [8]
 ];
 const gamepadConfig = {
   deadzone: 0.24,
@@ -240,6 +273,9 @@ function loadSavedSettings() {
     if (saved.timerMode) {
       state.timerMode = saved.timerMode;
     }
+    if (saved.universeMode && universeConfigs[saved.universeMode]) {
+      state.universeMode = saved.universeMode;
+    }
   } catch (error) {
     console.error("Settings load error", error);
   }
@@ -250,7 +286,8 @@ function persistSettings() {
     window.localStorage.setItem(
       storageKey,
       JSON.stringify({
-        timerMode: state.timerMode
+        timerMode: state.timerMode,
+        universeMode: state.universeMode
       })
     );
   } catch (error) {
@@ -267,7 +304,7 @@ function emojiToAssetCode(emojiChar) {
 }
 
 function getCurrentEmojiPool() {
-  return randomEmojiPool;
+  return universeConfigs[state.universeMode]?.pool || randomEmojiPool;
 }
 
 function chooseAutoVisualMode() {
@@ -282,8 +319,9 @@ function chooseAutoVisualMode() {
 }
 
 function chooseSpecialEventKind() {
-  const availableKinds = specialEventKinds.filter((kind) => kind !== state.lastSpecialKind);
-  return pickRandom(availableKinds.length ? availableKinds : specialEventKinds);
+  const universeKinds = universeConfigs[state.universeMode]?.specialKinds || specialEventKinds;
+  const availableKinds = universeKinds.filter((kind) => kind !== state.lastSpecialKind);
+  return pickRandom(availableKinds.length ? availableKinds : universeKinds);
 }
 
 function scheduleNextSpecialEvent(baseTime = Date.now()) {
@@ -292,7 +330,19 @@ function scheduleNextSpecialEvent(baseTime = Date.now()) {
   state.specialCooldownTotalMs = cooldownMs;
   state.pausedSpecialCooldownRemainingMs = null;
   state.nextSpecialAt = baseTime + cooldownMs;
+  state.nextSpecialKind = chooseSpecialEventKind();
+  updateSpecialCue();
   updateSpecialProgress();
+}
+
+function updateSpecialCue() {
+  if (!specialProgress || !specialProgressCue) {
+    return;
+  }
+
+  const cue = specialEventCues[state.nextSpecialKind] || universeConfigs[state.universeMode]?.cue || "✨";
+  specialProgress.dataset.kind = state.nextSpecialKind || "";
+  specialProgressCue.textContent = cue;
 }
 
 function updateSpecialProgress() {
@@ -655,6 +705,89 @@ function spawnSuperRainSpecial(x, y) {
   return 4300;
 }
 
+function getParadeEmojiPool() {
+  if (state.universeMode === "vehicles") {
+    return ["🚗", "🚕", "🚙", "🏎️", "🚜", "🚒", "🚀"];
+  }
+  if (state.universeMode === "animals") {
+    return ["🐶", "🐱", "🦊", "🐸", "🦁", "🦒", "🦄"];
+  }
+  if (state.universeMode === "magic") {
+    return ["🦄", "🧚", "👑", "🪄", "🔮", "💫", "🌙"];
+  }
+  return ["🚗", "🦄", "🦖", "🚀", "🐬", "🎈", "🏎️"];
+}
+
+function setParadePath(node, startX, endX, y, delay, direction) {
+  const directionMultiplier = Number(direction);
+  node.style.setProperty("--parade-start-x", `${startX.toFixed(2)}px`);
+  node.style.setProperty("--parade-mid-x", `${((startX + endX) / 2).toFixed(2)}px`);
+  node.style.setProperty("--parade-end-x", `${endX.toFixed(2)}px`);
+  node.style.setProperty("--parade-y", `${y.toFixed(2)}px`);
+  node.style.setProperty("--parade-tilt-start", `${(-8 * directionMultiplier).toFixed(2)}deg`);
+  node.style.setProperty("--parade-tilt-mid", `${(5 * directionMultiplier).toFixed(2)}deg`);
+  node.style.setProperty("--parade-tilt-end", `${(8 * directionMultiplier).toFixed(2)}deg`);
+  node.style.animationDelay = `${delay}ms`;
+}
+
+function spawnParadeSpecial(x, y) {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const overlay = createSpecialOverlay("special-parade", width / 2, height / 2);
+  const pool = getParadeEmojiPool();
+  const rows = getResolvedPerformanceMode() === "normal" ? 5 : 3;
+  const duration = 5200;
+
+  for (let index = 0; index < rows; index += 1) {
+    const fromLeft = index % 2 === 0;
+    const startX = fromLeft ? -90 : width + 90;
+    const endX = fromLeft ? width + 90 : -90;
+    const rowProgress = (index + 1) / (rows + 1);
+    const rowY = clamp(height * (0.22 + rowProgress * 0.56), 82, height - 70);
+    const emoji = createSpecialEmojiNode(0, 0, pickRandom(pool), "special-parade-emoji", 1.45);
+    setParadePath(emoji, startX, endX, rowY, index * 280, fromLeft ? "1" : "-1");
+    overlay.appendChild(emoji);
+
+    scheduleSpecialTask(() => {
+      spawnBurst(
+        clamp(width * rowProgress + randomBetween(-70, 70), 40, width - 40),
+        clamp(rowY + randomBetween(-26, 26), 40, height - 40),
+        { sizeMultiplier: 0.88 + Math.random() * 0.18 }
+      );
+    }, 900 + index * 420);
+  }
+
+  specialStage.replaceChildren(overlay);
+  return duration;
+}
+
+function spawnPartySpecial(x, y) {
+  const overlay = createSpecialOverlay("special-party", x, y);
+  const center = createSpecialEmojiNode(
+    clamp(x, 80, window.innerWidth - 80),
+    clamp(y, 80, window.innerHeight - 80),
+    pickRandom(["🎉", "🥳", "🎈", "🪄", "👑"]),
+    "special-party-hero",
+    2.35
+  );
+  overlay.appendChild(center);
+  specialStage.replaceChildren(overlay);
+
+  const burstCountForParty = getResolvedPerformanceMode() === "normal" ? 14 : 7;
+  for (let index = 0; index < burstCountForParty; index += 1) {
+    scheduleSpecialTask(() => {
+      const point = nextDistributedPoint();
+      spawnBurst(
+        clamp(point.x + randomBetween(-28, 28), 36, window.innerWidth - 36),
+        clamp(point.y + randomBetween(-32, 32), 36, window.innerHeight - 36),
+        { sizeMultiplier: 0.95 + Math.random() * 0.32 }
+      );
+    }, 180 + index * 180);
+  }
+
+  return 3900;
+}
+
 function endSpecialEvent() {
   if (specialEventTimeoutId) {
     window.clearTimeout(specialEventTimeoutId);
@@ -685,8 +818,12 @@ function startSpecialEvent(kind, x, y) {
     duration = spawnHeroSpecial(x, y);
   } else if (kind === "rainbow") {
     duration = spawnRainbowSpecial(x, y);
-  } else {
+  } else if (kind === "super-rain") {
     duration = spawnSuperRainSpecial(x, y);
+  } else if (kind === "parade") {
+    duration = spawnParadeSpecial(x, y);
+  } else {
+    duration = spawnPartySpecial(x, y);
   }
 
   specialEventTimeoutId = window.setTimeout(() => {
@@ -711,7 +848,7 @@ function maybeTriggerSpecialEvent(x, y) {
     return;
   }
 
-  startSpecialEvent(chooseSpecialEventKind(), x, y);
+  startSpecialEvent(state.nextSpecialKind || chooseSpecialEventKind(), x, y);
 }
 
 function triggerPlayModeBursts(x, y) {
@@ -862,6 +999,8 @@ function applyModeClasses() {
   playground.classList.toggle("is-special-hero", state.specialEventKind === "hero");
   playground.classList.toggle("is-special-rainbow", state.specialEventKind === "rainbow");
   playground.classList.toggle("is-special-super-rain", state.specialEventKind === "super-rain");
+  playground.classList.toggle("is-special-parade", state.specialEventKind === "parade");
+  playground.classList.toggle("is-special-party", state.specialEventKind === "party");
   playground.classList.toggle("is-session-locked", state.isSessionLocked);
 }
 
@@ -1104,9 +1243,16 @@ function setMenuFocusForState() {
     "timer:10": 1,
     "timer:15": 2,
     "timer:off": 3,
-    play: 4
+    "universe:surprise": 4,
+    "universe:animals": 5,
+    "universe:vehicles": 6,
+    "universe:magic": 7,
+    play: 8
   };
-  gamepadState.menuFocusIndex = focusMap[`timer:${state.timerMode}`] ?? focusMap.play;
+  gamepadState.menuFocusIndex =
+    focusMap[`timer:${state.timerMode}`] ??
+    focusMap[`universe:${state.universeMode}`] ??
+    focusMap.play;
   updateMenuFocus();
 }
 
@@ -1358,7 +1504,9 @@ function syncOptionButtons() {
   optionButtons.forEach((button) => {
     const group = button.dataset.group;
     const value = button.dataset.value;
-    const isActive = group === "timer" && value === state.timerMode;
+    const isActive =
+      (group === "timer" && value === state.timerMode) ||
+      (group === "universe" && value === state.universeMode);
 
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", String(isActive));
@@ -1492,6 +1640,10 @@ function handleOptionClick(event) {
   const { group, value } = button.dataset;
   if (group === "timer") {
     state.timerMode = value;
+  }
+  if (group === "universe" && universeConfigs[value]) {
+    state.universeMode = value;
+    scheduleNextSpecialEvent();
   }
 
   syncOptionButtons();

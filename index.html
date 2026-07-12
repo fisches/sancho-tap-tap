@@ -64,6 +64,23 @@
                 </button>
               </div>
             </section>
+            <section class="option-group" aria-labelledby="universeTitle">
+              <p class="option-title" id="universeTitle">univers</p>
+              <div class="option-row option-row-universe" id="universeOptions">
+                <button class="option-button is-active" type="button" data-group="universe" data-value="surprise">
+                  surprise
+                </button>
+                <button class="option-button" type="button" data-group="universe" data-value="animals">
+                  animaux
+                </button>
+                <button class="option-button" type="button" data-group="universe" data-value="vehicles">
+                  bolides
+                </button>
+                <button class="option-button" type="button" data-group="universe" data-value="magic">
+                  magie
+                </button>
+              </div>
+            </section>
           </div>
 
           <button id="playButton" class="play-button" type="button">jouer</button>
@@ -72,6 +89,7 @@
 
       <div class="session-timer" id="sessionTimer" aria-hidden="true"></div>
       <div class="special-progress" id="specialProgress" aria-hidden="true">
+        <div class="special-progress-cue" id="specialProgressCue"></div>
         <div class="special-progress-bar" id="specialProgressBar"></div>
       </div>
       <section class="resume-screen" id="resumeScreen" aria-hidden="true">
