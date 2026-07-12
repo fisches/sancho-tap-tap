@@ -48,6 +48,8 @@ Le navigateur garde automatiquement:
 - `bolides`: vehicules et parades
 - `magie`: etoiles, lunes, licornes et effets doux
 
+Chaque univers influence aussi l'ambiance de fond au lancement de la partie.
+
 ## Son
 
 Le son est coupe par defaut. Le mode `doux` ajoute de petits sons courts sur les taps et les grands moments.

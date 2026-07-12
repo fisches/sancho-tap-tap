@@ -147,6 +147,39 @@ button {
   opacity: 0.8;
 }
 
+.playground.is-universe-animals .pattern {
+  background-image:
+    radial-gradient(circle at 18% 32%, rgba(255, 255, 255, 0.42) 0 0.72vmax, transparent 0.88vmax),
+    radial-gradient(circle at 42% 66%, rgba(255, 255, 255, 0.28) 0 0.5vmax, transparent 0.68vmax),
+    radial-gradient(circle at 76% 28%, rgba(255, 255, 255, 0.34) 0 0.6vmax, transparent 0.78vmax);
+}
+
+.playground.is-universe-animals .shape-c {
+  background: rgba(188, 229, 168, 0.9);
+}
+
+.playground.is-universe-vehicles .pattern {
+  background-image:
+    linear-gradient(120deg, transparent 0 45%, rgba(255, 255, 255, 0.22) 45% 52%, transparent 52% 100%),
+    radial-gradient(circle at 24% 72%, rgba(255, 255, 255, 0.32) 0 0.52vmax, transparent 0.7vmax),
+    radial-gradient(circle at 72% 28%, rgba(255, 255, 255, 0.26) 0 0.5vmax, transparent 0.68vmax);
+}
+
+.playground.is-universe-vehicles .shape-b {
+  background: rgba(255, 205, 152, 0.52);
+}
+
+.playground.is-universe-magic .pattern {
+  background-image:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.48) 0 0.44vmax, transparent 0.62vmax),
+    radial-gradient(circle at 48% 42%, rgba(255, 255, 255, 0.34) 0 0.34vmax, transparent 0.52vmax),
+    radial-gradient(circle at 78% 70%, rgba(255, 255, 255, 0.38) 0 0.5vmax, transparent 0.68vmax);
+}
+
+.playground.is-universe-magic .shape-d {
+  background: rgba(235, 205, 255, 0.46);
+}
+
 .theme-sky {
   --bg-1: #eef8ff;
   --bg-2: #dff1ff;

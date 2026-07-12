@@ -7,6 +7,12 @@ const themes = [
   "theme-mint",
   "theme-peach"
 ];
+const universeThemePools = {
+  surprise: themes,
+  animals: ["theme-meadow", "theme-mint", "theme-sky"],
+  vehicles: ["theme-sky", "theme-paper", "theme-sunset"],
+  magic: ["theme-peach", "theme-sunset", "theme-paper"]
+};
 
 const animalEmojiPool = [
   "🐥", "🐣", "🐤", "🐻", "🐼", "🐨", "🐰", "🐹", "🐭", "🐁", "🦊", "🐸", "🐢", "🐙",
@@ -582,8 +588,12 @@ function getTimerDurationMs() {
   return Number.parseInt(state.timerMode, 10) * 60 * 1000;
 }
 
-function applyRandomTheme() {
-  const nextTheme = pickRandom(themes);
+function getUniverseThemePool() {
+  return universeThemePools[state.universeMode] || universeThemePools.surprise;
+}
+
+function applyUniverseTheme() {
+  const nextTheme = pickRandom(getUniverseThemePool());
   playground.classList.remove(...themes);
   playground.classList.add(nextTheme);
 }
@@ -1293,6 +1303,10 @@ function applyModeClasses() {
   playground.classList.toggle("is-giant-mode", state.visualMode === "giant");
   playground.classList.toggle("is-energy-gentle", state.energyMode === "gentle");
   playground.classList.toggle("is-energy-party", state.energyMode === "party");
+  playground.classList.toggle("is-universe-surprise", state.universeMode === "surprise");
+  playground.classList.toggle("is-universe-animals", state.universeMode === "animals");
+  playground.classList.toggle("is-universe-vehicles", state.universeMode === "vehicles");
+  playground.classList.toggle("is-universe-magic", state.universeMode === "magic");
   playground.classList.toggle("is-special-active", state.specialEventActive);
   playground.classList.toggle("is-special-hero", state.specialEventKind === "hero");
   playground.classList.toggle("is-special-rainbow", state.specialEventKind === "rainbow");
@@ -1931,7 +1945,7 @@ function startSessionCore() {
   state.interactionsSinceSpecial = 0;
   scheduleNextSpecialEvent();
   endSpecialEvent();
-  applyRandomTheme();
+  applyUniverseTheme();
   clearPrimeTimeouts();
   clearBursts();
   clearEndingCelebration();
@@ -2166,7 +2180,7 @@ function handleFullscreenChange() {
 }
 
 loadSavedSettings();
-applyRandomTheme();
+applyUniverseTheme();
 applyModeClasses();
 syncOptionButtons();
 showMenu();
