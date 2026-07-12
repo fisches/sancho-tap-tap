@@ -1500,10 +1500,10 @@ button {
   }
 
   .special-progress {
-    top: max(3.15rem, calc(env(safe-area-inset-top) + 2.85rem));
+    top: max(0.72rem, env(safe-area-inset-top));
     right: max(0.65rem, env(safe-area-inset-right));
-    width: clamp(4.8rem, 22vw, 6.4rem);
-    height: 0.34rem;
+    width: clamp(5.8rem, 30vw, 8rem);
+    height: 0.38rem;
   }
 
   .ending-card {
