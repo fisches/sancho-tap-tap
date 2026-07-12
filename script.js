@@ -109,6 +109,19 @@ const specialEventConfig = {
   maxCooldownMs: 38000,
   minInteractions: 14
 };
+const blockedGameplayKeyCodes = new Set([
+  "MetaLeft", "MetaRight", "OSLeft", "OSRight", "Super", "Hyper", "Fn",
+  "ContextMenu", "Escape", "PrintScreen", "ScrollLock", "Pause",
+  "CapsLock", "NumLock"
+]);
+for (let keyIndex = 1; keyIndex <= 12; keyIndex += 1) {
+  blockedGameplayKeyCodes.add(`F${keyIndex}`);
+}
+const distributedPointCells = [
+  [0.18, 0.2], [0.5, 0.18], [0.82, 0.2],
+  [0.24, 0.48], [0.76, 0.48],
+  [0.18, 0.78], [0.5, 0.82], [0.82, 0.78]
+];
 const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
@@ -135,6 +148,7 @@ const playButton = document.getElementById("playButton");
 const gamepadStatus = document.getElementById("gamepadStatus");
 const gamepadCursor = document.getElementById("gamepadCursor");
 const sessionTimer = document.getElementById("sessionTimer");
+const specialProgress = document.getElementById("specialProgress");
 const resumeScreen = document.getElementById("resumeScreen");
 const resumeTitle = document.getElementById("resumeTitle");
 const resumeText = document.getElementById("resumeText");
@@ -159,7 +173,9 @@ let endingTimeoutId = null;
 let menuComboTimeoutId = null;
 let menuComboSource = null;
 let specialEventTimeoutId = null;
+let specialProgressFrameId = null;
 let specialEventTaskIds = [];
+let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
 const state = {
   isPlaying: false,
   speedMode: "normal",
@@ -176,6 +192,7 @@ const state = {
   specialEventActive: false,
   specialEventKind: "",
   lastSpecialKind: "",
+  lastSpecialScheduledAt: 0,
   nextSpecialAt: 0,
   interactionsSinceSpecial: 0
 };
@@ -269,7 +286,44 @@ function chooseSpecialEventKind() {
 }
 
 function scheduleNextSpecialEvent(baseTime = Date.now()) {
+  state.lastSpecialScheduledAt = baseTime;
   state.nextSpecialAt = baseTime + randomBetween(specialEventConfig.minCooldownMs, specialEventConfig.maxCooldownMs);
+  updateSpecialProgress();
+}
+
+function updateSpecialProgress() {
+  if (!specialProgress) {
+    return;
+  }
+
+  const totalMs = Math.max(state.nextSpecialAt - state.lastSpecialScheduledAt, 1);
+  const elapsedMs = Date.now() - state.lastSpecialScheduledAt;
+  const progress = state.specialEventActive || !canInteractWithGameplay()
+    ? 0
+    : clamp(elapsedMs / totalMs, 0, 1);
+  specialProgress.style.setProperty("--special-progress", progress.toFixed(3));
+}
+
+function startSpecialProgressLoop() {
+  if (specialProgressFrameId) {
+    return;
+  }
+
+  const tick = () => {
+    updateSpecialProgress();
+    specialProgressFrameId = window.requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function stopSpecialProgressLoop() {
+  if (specialProgressFrameId) {
+    window.cancelAnimationFrame(specialProgressFrameId);
+    specialProgressFrameId = null;
+  }
+  if (specialProgress) {
+    specialProgress.style.setProperty("--special-progress", "0");
+  }
 }
 
 function getResolvedPerformanceMode() {
@@ -468,16 +522,17 @@ function spawnHeroSpecial(x, y) {
   const exitLeft = Math.random() > 0.5;
   const width = window.innerWidth;
   const height = window.innerHeight;
-  const startX = randomBetween(width * 0.22, width * 0.78);
-  const startY = 36;
-  const mid1X = exitLeft ? width * 0.72 : width * 0.28;
-  const mid1Y = height * 0.24;
-  const mid2X = exitLeft ? width * 0.24 : width * 0.76;
-  const mid2Y = height * 0.44;
-  const mid3X = exitLeft ? width * 0.68 : width * 0.32;
-  const mid3Y = height * 0.68;
-  const endX = exitLeft ? 42 : width - 42;
-  const endY = randomBetween(height * 0.78, height * 0.9);
+  const sidePadding = Math.max(width * 0.08, 72);
+  const startX = exitLeft ? width + sidePadding : -sidePadding;
+  const endX = exitLeft ? -sidePadding : width + sidePadding;
+  const startY = clamp(y + randomBetween(-height * 0.28, height * 0.18), height * 0.16, height * 0.82);
+  const mid1X = exitLeft ? width * 0.74 : width * 0.26;
+  const mid1Y = clamp(height * randomBetween(0.18, 0.32), 74, height - 74);
+  const mid2X = width * 0.5;
+  const mid2Y = clamp(height * randomBetween(0.4, 0.56), 74, height - 74);
+  const mid3X = exitLeft ? width * 0.24 : width * 0.76;
+  const mid3Y = clamp(height * randomBetween(0.68, 0.82), 74, height - 74);
+  const endY = clamp(height * randomBetween(0.28, 0.82), 74, height - 74);
   const wanderPoints = [
     { x: startX, y: startY },
     { x: mid1X, y: mid1Y },
@@ -486,13 +541,14 @@ function spawnHeroSpecial(x, y) {
     { x: endX, y: endY }
   ];
   const overlay = createSpecialOverlay("special-hero", width / 2, height / 2);
-  const heroEmoji = createSpecialEmojiNode(startX, startY, pickRandom(["🦄", "🐬", "🐘", "🦒", "🦁"]), "special-hero-emoji", 2.85);
+  const heroEmoji = createSpecialEmojiNode(0, 0, pickRandom(["🦄", "🐬", "🐘", "🦒", "🦁"]), "special-hero-emoji", 2.85);
   setWanderPath(heroEmoji, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY);
 
   overlay.appendChild(heroEmoji);
   specialStage.replaceChildren(overlay);
 
-  const burstCountForHero = getResolvedPerformanceMode() === "normal" ? 11 : 6;
+  const heroDuration = 6500;
+  const burstCountForHero = getResolvedPerformanceMode() === "normal" ? 16 : 8;
   for (let index = 0; index < burstCountForHero; index += 1) {
     scheduleSpecialTask(() => {
       const progress = index / Math.max(burstCountForHero - 1, 1);
@@ -500,13 +556,13 @@ function spawnHeroSpecial(x, y) {
       const nextPoint = interpolateWanderPoint(wanderPoints, Math.min(progress + 0.08, 1));
       const trailX = point.x - (nextPoint.x - point.x) * 0.7;
       const trailY = point.y - (nextPoint.y - point.y) * 0.7;
-      const burstX = clamp(trailX + randomBetween(-16, 16), 40, window.innerWidth - 40);
-      const burstY = clamp(trailY + randomBetween(-18, 18), 40, window.innerHeight - 40);
-      spawnBurst(burstX, burstY, { sizeMultiplier: 0.96 + Math.random() * 0.18 });
-    }, 900 + index * 300);
+      const burstX = clamp(trailX + randomBetween(-46, 46), 40, window.innerWidth - 40);
+      const burstY = clamp(trailY + randomBetween(-42, 42), 40, window.innerHeight - 40);
+      spawnBurst(burstX, burstY, { sizeMultiplier: 0.82 + Math.random() * 0.24 });
+    }, 520 + index * ((heroDuration - 1400) / Math.max(burstCountForHero - 1, 1)));
   }
 
-  return 5600;
+  return heroDuration;
 }
 
 function spawnRainbowSpecial(x, y) {
@@ -598,6 +654,7 @@ function endSpecialEvent() {
   state.specialEventKind = "";
   specialStage.replaceChildren();
   applyModeClasses();
+  updateSpecialProgress();
 }
 
 function startSpecialEvent(kind, x, y) {
@@ -654,15 +711,12 @@ function triggerPlayModeBursts(x, y) {
     spawnBurst(originX, originY, { sizeMultiplier: 0.92, variant: "rain" });
     const extraBursts = Math.max(getPerformanceProfile().rainBursts, 2);
     for (let index = 0; index < extraBursts; index += 1) {
-      const point = {
-        x: x + (Math.random() * 520 - 260),
-        y: y - 120 - Math.random() * Math.min(window.innerHeight * 0.42, 280)
-      };
+      const point = nextDistributedPoint();
       window.setTimeout(() => {
         if (canInteractWithGameplay()) {
           spawnBurst(
             clamp(point.x, 36, window.innerWidth - 36),
-            clamp(point.y, 24, Math.max(y - 16, 24)),
+            clamp(point.y - randomBetween(70, 190), 24, Math.max(window.innerHeight * 0.58, 90)),
             {
               sizeMultiplier: 0.82 + Math.random() * 0.24,
               variant: "rain"
@@ -679,9 +733,10 @@ function triggerPlayModeBursts(x, y) {
     if (getResolvedPerformanceMode() === "normal") {
       window.setTimeout(() => {
         if (canInteractWithGameplay()) {
+          const point = nextDistributedPoint();
           spawnBurst(
-            clamp(x + (Math.random() * 140 - 70), 40, window.innerWidth - 40),
-            clamp(y + (Math.random() * 120 - 60), 40, window.innerHeight - 40),
+            clamp(point.x + randomBetween(-36, 36), 40, window.innerWidth - 40),
+            clamp(point.y + randomBetween(-32, 32), 40, window.innerHeight - 40),
             { sizeMultiplier: 1.2 }
           );
         }
@@ -884,6 +939,7 @@ function openParentPanel() {
   gamepadState.parentFocusIndex = 0;
   parentScreen.setAttribute("aria-hidden", "false");
   playground.classList.add("is-parent-open");
+  stopSpecialProgressLoop();
   updateParentFocus();
 }
 
@@ -909,6 +965,7 @@ function closeParentPanel() {
 
     hideResumeScreen();
     startSessionTimer();
+    startSpecialProgressLoop();
   }
 }
 
@@ -920,6 +977,19 @@ function isModifierKey(code) {
 
 function isKeyboardMenuCombo(event) {
   return event.shiftKey && event.code === "KeyM";
+}
+
+function isBlockedGameplayKey(event) {
+  if (isKeyboardMenuCombo(event)) {
+    return false;
+  }
+
+  return blockedGameplayKeyCodes.has(event.code) ||
+    event.key === "Meta" ||
+    event.key === "OS" ||
+    event.key === "Super" ||
+    event.key === "Hyper" ||
+    event.metaKey;
 }
 
 function startKeyboardMenuCombo() {
@@ -1172,14 +1242,25 @@ function handlePointer(event) {
   maybeTriggerSpecialEvent(pointX, pointY);
 }
 
-function nextKeyboardPoint() {
+function nextDistributedPoint() {
   const marginX = Math.max(window.innerWidth * 0.08, 48);
   const marginY = Math.max(window.innerHeight * 0.1, 56);
+  const safeWidth = Math.max(window.innerWidth - marginX * 2, 1);
+  const safeHeight = Math.max(window.innerHeight - marginY * 2, 1);
+  const jump = 2 + Math.floor(Math.random() * 4);
+  distributedPointCursor = (distributedPointCursor + jump) % distributedPointCells.length;
+  const [cellX, cellY] = distributedPointCells[distributedPointCursor];
+  const jitterX = randomBetween(-0.11, 0.11);
+  const jitterY = randomBetween(-0.12, 0.12);
 
   return {
-    x: marginX + Math.random() * Math.max(window.innerWidth - marginX * 2, 1),
-    y: marginY + Math.random() * Math.max(window.innerHeight - marginY * 2, 1)
+    x: marginX + clamp(cellX + jitterX, 0, 1) * safeWidth,
+    y: marginY + clamp(cellY + jitterY, 0, 1) * safeHeight
   };
+}
+
+function nextKeyboardPoint() {
+  return nextDistributedPoint();
 }
 
 function triggerKeyboardBurst() {
@@ -1191,6 +1272,13 @@ function triggerKeyboardBurst() {
 
 function handleKeydown(event) {
   if (!state.isPlaying) {
+    return;
+  }
+
+  if (isBlockedGameplayKey(event)) {
+    event.preventDefault();
+    event.stopPropagation();
+    releaseKey(event);
     return;
   }
 
@@ -1278,6 +1366,7 @@ function showMenu() {
   releaseAllKeys();
   clearPrimeTimeouts();
   clearSessionTimer();
+  stopSpecialProgressLoop();
   if (endingTimeoutId) {
     window.clearTimeout(endingTimeoutId);
     endingTimeoutId = null;
@@ -1306,6 +1395,7 @@ function endSessionSoftly() {
   endSpecialEvent();
   clearPrimeTimeouts();
   clearSessionTimer();
+  stopSpecialProgressLoop();
   stopAllInteractiveInput();
   playground.classList.add("is-ending");
   endingScreen.removeAttribute("aria-hidden");
@@ -1372,6 +1462,7 @@ function startSessionCore() {
   lockScreen.setAttribute("aria-hidden", "true");
   endingScreen.setAttribute("aria-hidden", "true");
   applyModeClasses();
+  startSpecialProgressLoop();
   resetGamepadCursor();
   startSessionTimer();
   primeFirstView();
@@ -1433,6 +1524,7 @@ function pauseForInterruption(title, text) {
   endSpecialEvent();
   pauseSessionTimer();
   showResumeScreen(title, text);
+  stopSpecialProgressLoop();
 }
 
 async function startGame() {
@@ -1481,6 +1573,7 @@ async function handleResumeAction() {
 
   if (state.isPlaying && !state.isEnding) {
     startSessionTimer();
+    startSpecialProgressLoop();
   }
 }
 

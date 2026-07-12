@@ -22,6 +22,7 @@ Puis ouvrir `http://localhost:8000`.
 
 - retour parent clavier: `Shift + M`
 - retour parent manette: `LB + RB + Start`
+- les touches systeme sont ignorees quand le navigateur les transmet, mais la touche Super/Windows ne peut pas etre bloquee de facon fiable depuis une page web. Pour une vraie borne, il faut aussi la desactiver cote OS ou configuration kiosque.
 
 ## Reglages memorises
 
