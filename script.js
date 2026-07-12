@@ -2039,6 +2039,7 @@ function handleOptionClick(event) {
   if (group === "universe" && universeConfigs[value]) {
     state.universeMode = value;
     scheduleNextSpecialEvent();
+    applyUniverseTheme();
   }
   if (group === "energy" && energyConfigs[value]) {
     state.energyMode = value;

@@ -48,7 +48,7 @@ Le navigateur garde automatiquement:
 - `bolides`: vehicules et parades
 - `magie`: etoiles, lunes, licornes et effets doux
 
-Chaque univers influence aussi l'ambiance de fond au lancement de la partie.
+Chaque univers influence aussi l'ambiance de fond a la selection, puis au lancement de la partie.
 
 ## Son
 
