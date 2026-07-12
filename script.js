@@ -1342,8 +1342,30 @@ function updateParentActions() {
   parentResumeAction.hidden = state.isSessionLocked;
 }
 
+function getParentTimerSummaryLabel() {
+  if (state.isSessionLocked) {
+    return "terminee";
+  }
+
+  if (state.timerMode === "off") {
+    return "infini";
+  }
+
+  if (state.isPlaying) {
+    const remainingMs = state.sessionEndsAt
+      ? state.sessionEndsAt - Date.now()
+      : state.remainingSessionMs;
+
+    if (Number.isFinite(remainingMs) && remainingMs > 0) {
+      return `${formatRemainingTime(remainingMs)} restant`;
+    }
+  }
+
+  return timerLabels[state.timerMode] || state.timerMode;
+}
+
 function updateParentSummary() {
-  parentTimerSummary.textContent = timerLabels[state.timerMode] || state.timerMode;
+  parentTimerSummary.textContent = getParentTimerSummaryLabel();
   parentUniverseSummary.textContent = universeLabels[state.universeMode] || state.universeMode;
   parentEnergySummary.textContent = energyLabels[state.energyMode] || state.energyMode;
   parentSoundSummary.textContent = soundLabels[state.soundMode] || state.soundMode;
