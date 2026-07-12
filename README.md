@@ -29,13 +29,26 @@ Puis ouvrir `http://localhost:8000`.
 Le navigateur garde automatiquement:
 
 - minuteur
-- style visuel
+- univers
+- rythme
+- son
 
-## Styles enfant
+## Rythmes enfant
 
+- `doux`: animations plus calmes, effets plus espaces
 - `normal`: comportement classique
-- `pluie`: plusieurs emojis tombent en plus du tap
-- `geant`: emojis plus gros
+- `fete`: rythme plus dense et effets plus presents
+
+## Univers
+
+- `surprise`: melange de tous les emojis
+- `animaux`: animaux et effets adaptes
+- `bolides`: vehicules et parades
+- `magie`: etoiles, lunes, licornes et effets doux
+
+## Son
+
+Le son est coupe par defaut. Le mode `doux` ajoute de petits sons courts sur les taps et les grands moments.
 
 ## Performance
 

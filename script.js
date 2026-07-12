@@ -218,6 +218,7 @@ const parentMenuAction = document.getElementById("parentMenuAction");
 const parentExitAction = document.getElementById("parentExitAction");
 const lockScreen = document.getElementById("lockScreen");
 const endingScreen = document.getElementById("endingScreen");
+const endingCelebration = document.getElementById("endingCelebration");
 const hint = document.getElementById("hint");
 const optionButtons = Array.from(document.querySelectorAll(".option-button"));
 const menuFocusables = [...optionButtons, playButton];
@@ -1059,6 +1060,52 @@ function clearBursts() {
   burstCount = 0;
 }
 
+function clearEndingCelebration() {
+  if (endingCelebration) {
+    endingCelebration.replaceChildren();
+  }
+}
+
+function playEndingSound() {
+  if (state.soundMode === "off") {
+    return;
+  }
+
+  playTone(523, 0, 0.11, 0.32, "sine");
+  playTone(659, 0.08, 0.12, 0.28, "triangle");
+  playTone(784, 0.18, 0.16, 0.24, "sine");
+}
+
+function spawnEndingCelebration() {
+  clearEndingCelebration();
+  if (!endingCelebration) {
+    return;
+  }
+
+  const pool = [...getCurrentEmojiPool(), "⭐", "✨", "🎈", "💛"];
+  const count = getResolvedPerformanceMode() === "normal" ? 12 : 7;
+  const rows = Math.ceil(count / 4);
+
+  for (let index = 0; index < count; index += 1) {
+    const token = createEmoji(0, 0, pickRandom(pool), "main");
+    token.className = "ending-token emoji-image";
+    const column = index % 4;
+    const row = Math.floor(index / 4);
+    const x = ((column + 0.5 + randomBetween(-0.22, 0.22)) / 4) * 100;
+    const y = 18 + ((row + 0.5 + randomBetween(-0.18, 0.18)) / rows) * 64;
+
+    token.style.left = `${clamp(x, 8, 92).toFixed(2)}%`;
+    token.style.top = `${clamp(y, 16, 84).toFixed(2)}%`;
+    token.style.animationDelay = `${(index % 6) * 75}ms`;
+    token.style.setProperty("--ending-rotate", `${randomBetween(-14, 14).toFixed(2)}deg`);
+    token.style.setProperty("--ending-drift", `${randomBetween(-18, 18).toFixed(2)}px`);
+    token.style.setProperty("--ending-scale", `${randomBetween(0.88, 1.18).toFixed(2)}`);
+    endingCelebration.appendChild(token);
+  }
+
+  playEndingSound();
+}
+
 function clearPrimeTimeouts() {
   primeTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
   primeTimeouts = [];
@@ -1691,6 +1738,7 @@ function showMenu() {
     window.clearTimeout(endingTimeoutId);
     endingTimeoutId = null;
   }
+  clearEndingCelebration();
   resetHint();
   clearBursts();
   playground.classList.remove("is-playing");
@@ -1717,6 +1765,7 @@ function endSessionSoftly() {
   clearSessionTimer();
   stopSpecialProgressLoop();
   stopAllInteractiveInput();
+  spawnEndingCelebration();
   playground.classList.add("is-ending");
   endingScreen.removeAttribute("aria-hidden");
 
@@ -1729,6 +1778,7 @@ function endSessionSoftly() {
     playground.classList.remove("is-playing");
     playground.classList.remove("is-ending");
     lockScreen.setAttribute("aria-hidden", "false");
+    clearEndingCelebration();
     applyModeClasses();
   }, 2600);
 }
@@ -1770,6 +1820,7 @@ function startSessionCore() {
   applyRandomTheme();
   clearPrimeTimeouts();
   clearBursts();
+  clearEndingCelebration();
   resetHint();
   playground.classList.add("is-playing");
   playground.classList.remove("is-ending");
