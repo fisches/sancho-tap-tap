@@ -41,6 +41,8 @@ Le navigateur garde automatiquement:
 - `normal`: comportement classique
 - `fete`: rythme plus dense et effets plus presents
 
+Le bouton de lancement donne aussi un apercu du rythme choisi dans le menu.
+
 ## Univers
 
 - `surprise`: melange de tous les emojis

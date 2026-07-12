@@ -672,6 +672,16 @@ button {
   box-shadow: 0 28px 60px rgba(42, 66, 79, 0.16);
 }
 
+.playground.is-energy-gentle .menu-card {
+  box-shadow: 0 22px 50px rgba(42, 66, 79, 0.12);
+}
+
+.playground.is-energy-party .menu-card {
+  box-shadow:
+    0 30px 62px rgba(42, 66, 79, 0.17),
+    0 0 0 0.18rem rgba(255, 255, 255, 0.28);
+}
+
 .option-title,
 .menu-audience {
   margin: 0;
@@ -815,6 +825,18 @@ button {
   text-transform: lowercase;
   box-shadow: 0 16px 30px var(--button-shadow);
   animation: playPulse 2.8s ease-in-out infinite;
+}
+
+.playground.is-energy-gentle .play-button {
+  animation-duration: 4.2s;
+  box-shadow: 0 12px 24px var(--button-shadow-soft);
+}
+
+.playground.is-energy-party .play-button {
+  animation-duration: 1.75s;
+  box-shadow:
+    0 18px 34px var(--button-shadow),
+    0 0 0 0.28rem var(--button-glow);
 }
 
 .resume-screen,
