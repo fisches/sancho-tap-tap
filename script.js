@@ -3375,6 +3375,8 @@ function handleGamepadDisconnected(event) {
 
 function handleVisibilityChange() {
   if (document.hidden) {
+    releaseScreenWakeLock();
+    suspendAudioContext();
     pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
     return;
   }
