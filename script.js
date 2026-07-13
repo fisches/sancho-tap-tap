@@ -204,7 +204,9 @@ const idleNudgeDelays = {
 const blockedGameplayKeyCodes = new Set([
   "MetaLeft", "MetaRight", "OSLeft", "OSRight", "Super", "Hyper", "Fn",
   "ContextMenu", "Escape", "PrintScreen", "ScrollLock", "Pause",
-  "CapsLock", "NumLock"
+  "CapsLock", "NumLock", "ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft",
+  "PageUp", "PageDown", "Home", "End", "Insert", "Delete",
+  "BrowserBack", "BrowserForward", "BrowserRefresh", "BrowserHome"
 ]);
 for (let keyIndex = 1; keyIndex <= 12; keyIndex += 1) {
   blockedGameplayKeyCodes.add(`F${keyIndex}`);
