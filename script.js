@@ -421,6 +421,10 @@ function randomBetween(min, max) {
 function loadSavedSettings() {
   try {
     const saved = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+      return;
+    }
+
     const savedTimerMode = String(saved.timerMode || "");
     if (Object.prototype.hasOwnProperty.call(timerLabels, savedTimerMode)) {
       state.timerMode = savedTimerMode;
