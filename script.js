@@ -1571,8 +1571,13 @@ function spawnEndingCelebration() {
     return;
   }
 
+  const performanceMode = getResolvedPerformanceMode();
+  if (performanceMode === "ultra") {
+    return;
+  }
+
   const pool = [...getCurrentEmojiPool(), "⭐", "✨", "🎈", "💛"];
-  const count = getResolvedPerformanceMode() === "normal" ? 12 : 7;
+  const count = performanceMode === "normal" ? 12 : 5;
   const rows = Math.ceil(count / 4);
 
   for (let index = 0; index < count; index += 1) {
