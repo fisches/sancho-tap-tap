@@ -1102,6 +1102,17 @@ button {
   object-fit: contain;
 }
 
+.emoji-native {
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  font-size: clamp(3.25rem, 10vmin, 7rem);
+}
+
+.emoji-native.sparkle {
+  font-size: clamp(1.3rem, 3.2vmin, 2rem);
+}
+
 .emoji.sparkle {
   width: clamp(1.3rem, 3.2vmin, 2rem);
   height: clamp(1.3rem, 3.2vmin, 2rem);

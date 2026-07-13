@@ -701,7 +701,6 @@ function applyUniverseTheme() {
 function createEmoji(x, y, emojiChar, variant = "main") {
   const emoji = document.createElement("img");
   emoji.className = variant === "sparkle" ? "emoji emoji-image sparkle" : "emoji emoji-image";
-  emoji.src = `${emojiAssetBaseUrl}/${emojiToAssetCode(emojiChar)}.png`;
   emoji.alt = "";
   emoji.decoding = "async";
   emoji.loading = "eager";
@@ -712,6 +711,15 @@ function createEmoji(x, y, emojiChar, variant = "main") {
   }
   emoji.style.setProperty("--twist", `${(Math.random() * 26 - 13).toFixed(2)}deg`);
   emoji.style.setProperty("--size-scale", getPerformanceProfile().sizeScale.toFixed(2));
+  emoji.addEventListener("error", () => {
+    const fallback = document.createElement("span");
+    fallback.className = emoji.className.replace("emoji-image", "emoji-native");
+    fallback.style.cssText = emoji.style.cssText;
+    fallback.textContent = emojiChar;
+    fallback.setAttribute("aria-hidden", "true");
+    emoji.replaceWith(fallback);
+  }, { once: true });
+  emoji.src = `${emojiAssetBaseUrl}/${emojiToAssetCode(emojiChar)}.png`;
   return emoji;
 }
 
