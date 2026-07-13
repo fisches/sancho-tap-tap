@@ -236,9 +236,33 @@ const reducedMotionQuery =
     : null;
 const storageKey = "sancho-tap-tap:settings";
 const performanceProfiles = {
-  normal: { maxBursts: 24, sparkleRange: [3, 5], ring: true, primeCount: 2, rainBursts: 2, sizeScale: 1 },
-  light: { maxBursts: 12, sparkleRange: [1, 2], ring: false, primeCount: 1, rainBursts: 1, sizeScale: 0.9 },
-  ultra: { maxBursts: 8, sparkleRange: [0, 1], ring: false, primeCount: 1, rainBursts: 0, sizeScale: 0.8 }
+  normal: {
+    maxBursts: 24,
+    sparkleRange: [3, 5],
+    ring: true,
+    primeCount: 2,
+    rainBursts: 2,
+    idleNudgeBursts: 3,
+    sizeScale: 1
+  },
+  light: {
+    maxBursts: 12,
+    sparkleRange: [1, 2],
+    ring: false,
+    primeCount: 1,
+    rainBursts: 1,
+    idleNudgeBursts: 1,
+    sizeScale: 0.9
+  },
+  ultra: {
+    maxBursts: 8,
+    sparkleRange: [0, 1],
+    ring: false,
+    primeCount: 1,
+    rainBursts: 0,
+    idleNudgeBursts: 1,
+    sizeScale: 0.8
+  }
 };
 const speedSettings = {
   slow: { burstLifetime: 4000, keyBurstInterval: 220, animationDuration: 4000 },
@@ -1277,18 +1301,34 @@ function resetIdleNudgeState() {
   idleNudgeCount = 0;
 }
 
+function getIdleNudgeBurstPlan() {
+  const profile = getPerformanceProfile();
+  const count = getResolvedPerformanceMode() === "normal"
+    ? Math.min(3, Math.max(2, profile.idleNudgeBursts))
+    : 1;
+
+  return Array.from({ length: count }, (_, index) => {
+    const point = nextDistributedPoint();
+    return {
+      x: clamp(point.x + randomBetween(-28, 28), 42, window.innerWidth - 42),
+      y: clamp(point.y + randomBetween(-24, 24), 42, window.innerHeight - 42),
+      delay: index * 210,
+      sizeMultiplier: index === 0 ? 0.98 : 0.76
+    };
+  });
+}
+
 function spawnIdleNudge() {
   if (!canInteractWithGameplay() || state.specialEventActive) {
     scheduleIdleNudge();
     return;
   }
 
-  const point = nextDistributedPoint();
-  spawnBurst(
-    clamp(point.x + randomBetween(-24, 24), 42, window.innerWidth - 42),
-    clamp(point.y + randomBetween(-22, 22), 42, window.innerHeight - 42),
-    { sizeMultiplier: 0.98 }
-  );
+  getIdleNudgeBurstPlan().forEach((burst) => {
+    scheduleVisualEffectTask(() => {
+      spawnBurst(burst.x, burst.y, { sizeMultiplier: burst.sizeMultiplier });
+    }, burst.delay);
+  });
   idleNudgeCount += 1;
   scheduleIdleNudge();
 }
