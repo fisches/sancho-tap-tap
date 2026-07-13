@@ -1260,8 +1260,10 @@ function maybeTriggerSpecialEvent(x, y) {
 
 function getPointerCoveragePlan(x, y) {
   const now = Date.now();
-  const zoneColumn = Math.floor(clamp(x / Math.max(window.innerWidth, 1), 0, 0.999) * 4);
-  const zoneRow = Math.floor(clamp(y / Math.max(window.innerHeight, 1), 0, 0.999) * 3);
+  const viewportWidth = getViewportWidth();
+  const viewportHeight = getViewportHeight();
+  const zoneColumn = Math.floor(clamp(x / Math.max(viewportWidth, 1), 0, 0.999) * 4);
+  const zoneRow = Math.floor(clamp(y / Math.max(viewportHeight, 1), 0, 0.999) * 3);
   const zone = `${zoneColumn}:${zoneRow}`;
   if (zone === pointerTapZone && now - lastPointerTapAt < pointerRepeatWindowMs) {
     pointerTapZoneCount += 1;
@@ -1279,12 +1281,12 @@ function getPointerCoveragePlan(x, y) {
   const echoPoint = nextDistributedPoint();
   return {
     main: {
-      x: clamp(mainPoint.x + randomBetween(-34, 34), 36, window.innerWidth - 36),
-      y: clamp(mainPoint.y + randomBetween(-30, 30), 36, window.innerHeight - 36)
+      x: clamp(mainPoint.x + randomBetween(-34, 34), 36, viewportWidth - 36),
+      y: clamp(mainPoint.y + randomBetween(-30, 30), 36, viewportHeight - 36)
     },
     echo: {
-      x: clamp(echoPoint.x + randomBetween(-34, 34), 36, window.innerWidth - 36),
-      y: clamp(echoPoint.y + randomBetween(-30, 30), 36, window.innerHeight - 36),
+      x: clamp(echoPoint.x + randomBetween(-34, 34), 36, viewportWidth - 36),
+      y: clamp(echoPoint.y + randomBetween(-30, 30), 36, viewportHeight - 36),
       delay: pointerTapZoneCount % 2 === 0 ? 70 : 130
     }
   };
@@ -1319,6 +1321,8 @@ function resetIdleNudgeState() {
 
 function getIdleNudgeBurstPlan() {
   const profile = getPerformanceProfile();
+  const viewportWidth = getViewportWidth();
+  const viewportHeight = getViewportHeight();
   const count = getResolvedPerformanceMode() === "normal"
     ? Math.min(3, Math.max(2, profile.idleNudgeBursts))
     : 1;
@@ -1326,8 +1330,8 @@ function getIdleNudgeBurstPlan() {
   return Array.from({ length: count }, (_, index) => {
     const point = nextDistributedPoint();
     return {
-      x: clamp(point.x + randomBetween(-28, 28), 42, window.innerWidth - 42),
-      y: clamp(point.y + randomBetween(-24, 24), 42, window.innerHeight - 42),
+      x: clamp(point.x + randomBetween(-28, 28), 42, viewportWidth - 42),
+      y: clamp(point.y + randomBetween(-24, 24), 42, viewportHeight - 42),
       delay: index * 210,
       sizeMultiplier: index === 0 ? 0.98 : 0.76
     };
@@ -1373,6 +1377,8 @@ function recordGameplayActivity() {
 }
 
 function triggerPlayModeBursts(x, y, options = {}) {
+  const viewportWidth = getViewportWidth();
+  const viewportHeight = getViewportHeight();
   const coveragePlan = options.source === "pointer" ? getPointerCoveragePlan(x, y) : null;
   const primaryX = coveragePlan?.main?.x ?? x;
   const primaryY = coveragePlan?.main?.y ?? y;
@@ -1380,7 +1386,7 @@ function triggerPlayModeBursts(x, y, options = {}) {
   applyModeClasses();
 
   if (state.visualMode === "rain") {
-    const originX = clamp(primaryX + (Math.random() * 240 - 120), 36, window.innerWidth - 36);
+    const originX = clamp(primaryX + (Math.random() * 240 - 120), 36, viewportWidth - 36);
     const originY = clamp(primaryY - 90 - Math.random() * 150, 26, Math.max(primaryY - 22, 26));
     spawnBurst(originX, originY, { sizeMultiplier: 0.92, variant: "rain" });
     const extraBursts = Math.max(getPerformanceProfile().rainBursts, 2);
@@ -1388,8 +1394,8 @@ function triggerPlayModeBursts(x, y, options = {}) {
       const point = nextDistributedPoint();
       scheduleVisualEffectTask(() => {
         spawnBurst(
-          clamp(point.x, 36, window.innerWidth - 36),
-          clamp(point.y - randomBetween(70, 190), 24, Math.max(window.innerHeight * 0.58, 90)),
+          clamp(point.x, 36, viewportWidth - 36),
+          clamp(point.y - randomBetween(70, 190), 24, Math.max(viewportHeight * 0.58, 90)),
           {
             sizeMultiplier: 0.82 + Math.random() * 0.24,
             variant: "rain"
@@ -1406,8 +1412,8 @@ function triggerPlayModeBursts(x, y, options = {}) {
       scheduleVisualEffectTask(() => {
         const point = nextDistributedPoint();
         spawnBurst(
-          clamp(point.x + randomBetween(-36, 36), 40, window.innerWidth - 40),
-          clamp(point.y + randomBetween(-32, 32), 40, window.innerHeight - 40),
+          clamp(point.x + randomBetween(-36, 36), 40, viewportWidth - 40),
+          clamp(point.y + randomBetween(-32, 32), 40, viewportHeight - 40),
           { sizeMultiplier: 1.2 }
         );
       }, 90);
@@ -1974,13 +1980,21 @@ function updateGamepadCursor() {
 }
 
 function resetGamepadCursor() {
-  gamepadState.cursorX = window.innerWidth / 2;
-  gamepadState.cursorY = window.innerHeight / 2;
+  gamepadState.cursorX = getViewportWidth() / 2;
+  gamepadState.cursorY = getViewportHeight() / 2;
   updateGamepadCursor();
 }
 
+function getViewportWidth() {
+  return window.visualViewport?.width || window.innerWidth;
+}
+
+function getViewportHeight() {
+  return window.visualViewport?.height || window.innerHeight;
+}
+
 function syncViewportSize() {
-  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  const viewportHeight = getViewportHeight();
   document.documentElement.style.setProperty("--app-height", `${Math.max(viewportHeight, 1).toFixed(2)}px`);
 }
 
@@ -2615,10 +2629,12 @@ function handleKioskNativeGesture(event) {
 }
 
 function nextDistributedPoint() {
-  const marginX = Math.max(window.innerWidth * 0.08, 48);
-  const marginY = Math.max(window.innerHeight * 0.1, 56);
-  const safeWidth = Math.max(window.innerWidth - marginX * 2, 1);
-  const safeHeight = Math.max(window.innerHeight - marginY * 2, 1);
+  const viewportWidth = getViewportWidth();
+  const viewportHeight = getViewportHeight();
+  const marginX = Math.max(viewportWidth * 0.08, 48);
+  const marginY = Math.max(viewportHeight * 0.1, 56);
+  const safeWidth = Math.max(viewportWidth - marginX * 2, 1);
+  const safeHeight = Math.max(viewportHeight - marginY * 2, 1);
   const jump = 2 + Math.floor(Math.random() * 4);
   distributedPointCursor = (distributedPointCursor + jump) % distributedPointCells.length;
   const [cellX, cellY] = distributedPointCells[distributedPointCursor];
