@@ -1694,7 +1694,8 @@ function getParentTimerSummaryLabel() {
       : state.remainingSessionMs;
 
     if (Number.isFinite(remainingMs) && remainingMs > 0) {
-      return `${formatRemainingTime(remainingMs)} restant`;
+      const remainingLabel = `${formatRemainingTime(remainingMs)} restant`;
+      return state.isParentPanelOpen ? `pause - ${remainingLabel}` : remainingLabel;
     }
   }
 
