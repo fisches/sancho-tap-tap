@@ -1924,7 +1924,11 @@ function closeParentPanel() {
 
   if (state.isPlaying && !state.isEnding) {
     if (state.fullscreenWanted && !document.fullscreenElement) {
-      showResumeScreen("plein ecran requis", "touche une fois pour revenir dans le jeu en plein ecran.");
+      showResumeScreen(
+        "plein ecran requis",
+        "touche une fois pour revenir dans le jeu en plein ecran.",
+        "plein ecran"
+      );
       return;
     }
 
@@ -2699,7 +2703,7 @@ async function ensureFullscreen() {
   }
 }
 
-function pauseForInterruption(title, text) {
+function pauseForInterruption(title, text, actionLabel = "reprendre") {
   if (!state.isPlaying || state.isEnding || state.isParentPanelOpen) {
     return;
   }
@@ -2708,7 +2712,7 @@ function pauseForInterruption(title, text) {
   pauseSpecialCooldown();
   endSpecialEvent();
   pauseSessionTimer();
-  showResumeScreen(title, text);
+  showResumeScreen(title, text, actionLabel);
   releaseScreenWakeLock();
   stopSpecialProgressLoop({ resetProgress: false });
 }
@@ -2742,7 +2746,7 @@ async function handleResumeAction() {
         state.pendingStart
           ? "touche une fois pour passer en plein ecran avant de lancer la partie."
           : "retourne dans le plein ecran pour reprendre tranquillement.",
-        state.pendingStart ? "entrer en plein ecran" : "reprendre",
+        state.pendingStart ? "entrer en plein ecran" : "plein ecran",
         state.pendingStart
       );
       return;
@@ -2850,7 +2854,11 @@ function handleFullscreenChange() {
   }
 
   if (!document.fullscreenElement) {
-    pauseForInterruption("plein ecran requis", "touche une fois pour revenir dans le jeu en plein ecran.");
+    pauseForInterruption(
+      "plein ecran requis",
+      "touche une fois pour revenir dans le jeu en plein ecran.",
+      "plein ecran"
+    );
   }
 }
 
