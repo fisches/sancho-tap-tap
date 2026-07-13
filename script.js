@@ -1485,6 +1485,49 @@ function handleResumeKeydown(event) {
   return false;
 }
 
+function handleParentKeydown(event) {
+  if (!state.isParentPanelOpen) {
+    return false;
+  }
+
+  if (event.code === "Escape") {
+    event.preventDefault();
+    event.stopPropagation();
+    closeParentPanel();
+    return true;
+  }
+
+  const availableActions = getParentAvailableActions();
+  if (!availableActions.length) {
+    return false;
+  }
+
+  const movePrevious = event.code === "ArrowLeft" || event.code === "ArrowUp";
+  const moveNext = event.code === "ArrowRight" || event.code === "ArrowDown";
+  if (availableActions.length > 1 && (movePrevious || moveNext)) {
+    event.preventDefault();
+    event.stopPropagation();
+    const delta = movePrevious ? -1 : 1;
+    gamepadState.parentFocusIndex =
+      (gamepadState.parentFocusIndex + delta + availableActions.length) % availableActions.length;
+    updateParentFocus();
+    focusCurrentParentAction();
+    return true;
+  }
+
+  if (event.code === "Enter" || event.code === "Space") {
+    event.preventDefault();
+    event.stopPropagation();
+    const activeAction = availableActions.includes(document.activeElement)
+      ? document.activeElement
+      : availableActions[gamepadState.parentFocusIndex];
+    activeAction.click();
+    return true;
+  }
+
+  return false;
+}
+
 function updateParentActions() {
   parentResumeAction.hidden = state.isSessionLocked;
 }
@@ -2056,6 +2099,10 @@ function handleKeydown(event) {
   }
 
   if (handleResumeKeydown(event)) {
+    return;
+  }
+
+  if (handleParentKeydown(event)) {
     return;
   }
 
