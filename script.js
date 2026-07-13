@@ -2073,6 +2073,7 @@ function showMenu() {
   applyModeClasses();
   setMenuFocusForState();
   updateParentFocus();
+  focusAction(playButton);
 }
 
 function endSessionSoftly() {
