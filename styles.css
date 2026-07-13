@@ -460,6 +460,12 @@ button {
   transform: scale(1);
 }
 
+.playground.is-playing .parent-hotspot.is-armed {
+  opacity: 0.76;
+  transform: scale(1.03);
+  background: var(--ui-glass-strong);
+}
+
 .playground.is-session-locked .parent-hotspot {
   opacity: 0.46;
   transform: scale(1);

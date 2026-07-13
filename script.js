@@ -214,6 +214,7 @@ const distributedPointCells = [
   [0.18, 0.78], [0.5, 0.82], [0.82, 0.78]
 ];
 const pointerRepeatWindowMs = 2600;
+const parentHotspotConfirmMs = 1200;
 const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
@@ -277,6 +278,8 @@ let sessionTimerIntervalId = null;
 let endingTimeoutId = null;
 let menuComboTimeoutId = null;
 let menuComboSource = null;
+let parentHotspotTimeoutId = null;
+let parentHotspotArmed = false;
 let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
@@ -1397,6 +1400,43 @@ function clearMenuReturnCombo() {
   menuComboSource = null;
 }
 
+function resetParentHotspotArm() {
+  if (parentHotspotTimeoutId) {
+    window.clearTimeout(parentHotspotTimeoutId);
+    parentHotspotTimeoutId = null;
+  }
+
+  parentHotspotArmed = false;
+  parentHotspot.classList.remove("is-armed");
+  parentHotspot.textContent = "parent";
+}
+
+function shouldConfirmParentHotspot() {
+  return state.isPlaying && !state.isEnding && !state.isParentPanelOpen && !state.isSessionLocked;
+}
+
+function handleParentHotspotClick(event) {
+  if (!shouldConfirmParentHotspot()) {
+    resetParentHotspotArm();
+    openParentPanel();
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (parentHotspotArmed) {
+    resetParentHotspotArm();
+    openParentPanel();
+    return;
+  }
+
+  parentHotspotArmed = true;
+  parentHotspot.classList.add("is-armed");
+  parentHotspot.textContent = "encore";
+  parentHotspotTimeoutId = window.setTimeout(resetParentHotspotArm, parentHotspotConfirmMs);
+}
+
 function syncFullscreenState() {
   const fullscreenSupported = typeof document.documentElement.requestFullscreen === "function";
   fullscreenButton.hidden = !fullscreenSupported;
@@ -1782,6 +1822,7 @@ function openParentPanel() {
     return;
   }
 
+  resetParentHotspotArm();
   stopAllInteractiveInput();
   pauseSpecialCooldown();
   endSpecialEvent();
@@ -2154,7 +2195,7 @@ function pollGamepads() {
 
 function handlePointer(event) {
   if (state.isPausedForFocus && !state.isParentPanelOpen && !state.isSessionLocked) {
-    if (event.target.closest(".resume-button, .resume-menu-button")) {
+    if (event.target.closest(".resume-button, .resume-menu-button, .parent-hotspot")) {
       return;
     }
 
@@ -2168,7 +2209,7 @@ function handlePointer(event) {
     return;
   }
 
-  if (event.target === fullscreenButton) {
+  if (event.target === fullscreenButton || event.target === parentHotspot) {
     return;
   }
 
@@ -2336,6 +2377,7 @@ function syncOptionButtons() {
 }
 
 function showMenu() {
+  resetParentHotspotArm();
   state.isPlaying = false;
   state.isEnding = false;
   state.isSessionLocked = false;
@@ -2433,6 +2475,7 @@ function startSessionTimer() {
 }
 
 function startSessionCore() {
+  resetParentHotspotArm();
   state.isPlaying = true;
   state.isEnding = false;
   state.pendingStart = false;
@@ -2722,7 +2765,7 @@ registerServiceWorker();
 playground.addEventListener("pointerdown", handlePointer, { passive: false });
 playground.addEventListener("contextmenu", handleContextMenu);
 fullscreenButton.addEventListener("click", toggleFullscreen);
-parentHotspot.addEventListener("click", openParentPanel);
+parentHotspot.addEventListener("click", handleParentHotspotClick);
 menuScreen.addEventListener("click", handleOptionClick);
 playButton.addEventListener("click", startGame);
 resumeButton.addEventListener("click", handleResumeAction);
