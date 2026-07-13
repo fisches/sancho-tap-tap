@@ -283,6 +283,7 @@ let pointerTapZoneCount = 0;
 let lastPointerTapAt = 0;
 let audioContext = null;
 let lastTapSoundAt = 0;
+let lastHapticAt = 0;
 const state = {
   isPlaying: false,
   speedMode: "normal",
@@ -471,6 +472,32 @@ function playTapSound() {
   const baseFrequency = state.energyMode === "party" ? 620 : 520;
   playTone(baseFrequency + randomBetween(-35, 40), 0, 0.07, 0.55, "sine");
   playTone(baseFrequency * 1.5, 0.025, 0.055, 0.22, "triangle");
+}
+
+function playHaptic(pattern, minIntervalMs = 120) {
+  if (typeof navigator.vibrate !== "function") {
+    return false;
+  }
+
+  const now = performance.now();
+  if (now - lastHapticAt < minIntervalMs) {
+    return false;
+  }
+
+  lastHapticAt = now;
+  return navigator.vibrate(pattern);
+}
+
+function playTapHaptic() {
+  playHaptic(8, state.energyMode === "party" ? 95 : 140);
+}
+
+function playSpecialHaptic() {
+  playHaptic([18, 35, 18], 650);
+}
+
+function playEndingHaptic() {
+  playHaptic([14, 45, 24], 650);
 }
 
 function playSpecialSound(kind) {
@@ -1058,6 +1085,7 @@ function startSpecialEvent(kind, x, y) {
   scheduleNextSpecialEvent(Date.now());
   applyModeClasses();
   playSpecialSound(kind);
+  playSpecialHaptic();
 
   let duration = 3200;
   if (kind === "hero") {
@@ -1308,6 +1336,7 @@ function spawnEndingCelebration() {
   }
 
   playEndingSound();
+  playEndingHaptic();
 }
 
 function clearPrimeTimeouts() {
@@ -2059,6 +2088,7 @@ function handlePointer(event) {
 
   hideHint();
   playTapSound();
+  playTapHaptic();
   recordGameplayActivity();
   triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
   maybeTriggerSpecialEvent(pointX, pointY);
@@ -2102,6 +2132,7 @@ function triggerKeyboardBurst() {
   const point = nextKeyboardPoint();
   hideHint();
   playTapSound();
+  playTapHaptic();
   recordGameplayActivity();
   triggerPlayModeBursts(point.x, point.y);
   maybeTriggerSpecialEvent(point.x, point.y);
