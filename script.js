@@ -2112,7 +2112,7 @@ function syncViewportSize() {
 
 function settleViewportScene() {
   viewportResizeSettleTimeoutId = null;
-  if (!state.isPlaying || state.isEnding || state.isPausedForFocus || state.isParentPanelOpen) {
+  if (!canInteractWithGameplay()) {
     return;
   }
 
@@ -2133,7 +2133,7 @@ function handleViewportResize() {
     window.clearTimeout(viewportResizeSettleTimeoutId);
     viewportResizeSettleTimeoutId = null;
   }
-  if (!state.isPlaying || state.isEnding) {
+  if (!canInteractWithGameplay()) {
     return;
   }
   viewportResizeSettleTimeoutId = window.setTimeout(settleViewportScene, 180);
@@ -2204,7 +2204,7 @@ async function releaseScreenWakeLock() {
 }
 
 function canInteractWithGameplay() {
-  return state.isPlaying && !state.isEnding && !state.isPausedForFocus && !state.isParentPanelOpen;
+  return state.isPlaying && !state.isEnding && !state.isPausedForFocus && !state.isParentPanelOpen && !state.isSessionLocked;
 }
 
 function isGamepadBurstPressed(gamepad) {
