@@ -2159,6 +2159,9 @@ function handleGamepadParentPanel(gamepad, horizontal, primaryPressed) {
 
   if (horizontalPressed && !gamepadState.previousDirections.left && !gamepadState.previousDirections.right) {
     const availableActions = getParentAvailableActions();
+    if (!availableActions.length) {
+      return;
+    }
     const delta = movingLeft ? -1 : 1;
     gamepadState.parentFocusIndex =
       (gamepadState.parentFocusIndex + delta + availableActions.length) % availableActions.length;
@@ -2898,6 +2901,7 @@ function handleFullscreenChange() {
   if (state.isParentPanelOpen) {
     updateParentActions();
     updateParentFocus();
+    focusCurrentParentAction();
   }
 
   if (!state.fullscreenWanted || !state.isPlaying || state.isEnding || state.isParentPanelOpen) {
