@@ -2240,6 +2240,11 @@ function isGamepadActionPressed(gamepad) {
 }
 
 function triggerGamepadBurst() {
+  if (!canInteractWithGameplay()) {
+    stopGamepadSpawn();
+    return;
+  }
+
   const point = nextKeyboardPoint();
   hideHint();
   recordGameplayActivity();
