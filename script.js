@@ -580,6 +580,11 @@ function playTapSound() {
 
   lastTapSoundAt = now;
   const baseFrequency = state.energyMode === "party" ? 620 : 520;
+  if (getResolvedPerformanceMode() === "ultra") {
+    playTone(baseFrequency + randomBetween(-28, 32), 0, 0.055, 0.42, "sine");
+    return;
+  }
+
   playTone(baseFrequency + randomBetween(-35, 40), 0, 0.07, 0.55, "sine");
   playTone(baseFrequency * 1.5, 0.025, 0.055, 0.22, "triangle");
 }
