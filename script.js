@@ -2174,6 +2174,7 @@ function stopAllInteractiveInput() {
   resetPointerTrail();
   clearMenuReturnCombo();
   clearIdleNudge();
+  clearPrimeTimeouts();
   clearVisualEffectTasks();
 }
 
