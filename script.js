@@ -1449,6 +1449,42 @@ function focusCurrentResumeAction() {
   focusAction(getResumeAvailableActions()[gamepadState.resumeFocusIndex]);
 }
 
+function handleResumeKeydown(event) {
+  if (!state.isPausedForFocus) {
+    return false;
+  }
+
+  const availableActions = getResumeAvailableActions();
+  if (!availableActions.length) {
+    return false;
+  }
+
+  const movePrevious = event.code === "ArrowLeft" || event.code === "ArrowUp";
+  const moveNext = event.code === "ArrowRight" || event.code === "ArrowDown";
+  if (availableActions.length > 1 && (movePrevious || moveNext)) {
+    event.preventDefault();
+    event.stopPropagation();
+    const delta = movePrevious ? -1 : 1;
+    gamepadState.resumeFocusIndex =
+      (gamepadState.resumeFocusIndex + delta + availableActions.length) % availableActions.length;
+    updateResumeFocus();
+    focusCurrentResumeAction();
+    return true;
+  }
+
+  if (event.code === "Enter" || event.code === "Space") {
+    event.preventDefault();
+    event.stopPropagation();
+    const activeAction = availableActions.includes(document.activeElement)
+      ? document.activeElement
+      : availableActions[gamepadState.resumeFocusIndex];
+    activeAction.click();
+    return true;
+  }
+
+  return false;
+}
+
 function updateParentActions() {
   parentResumeAction.hidden = state.isSessionLocked;
 }
@@ -2019,6 +2055,10 @@ function handleKeydown(event) {
     return;
   }
 
+  if (handleResumeKeydown(event)) {
+    return;
+  }
+
   if (
     isBlockedGameplayKey(event) &&
     (state.isPlaying || state.isPausedForFocus || state.isParentPanelOpen || state.isSessionLocked || state.pendingStart)
@@ -2030,12 +2070,6 @@ function handleKeydown(event) {
   }
 
   if (!state.isPlaying) {
-    return;
-  }
-
-  if (state.isPausedForFocus && event.code === "Enter") {
-    event.preventDefault();
-    resumeButton.click();
     return;
   }
 
