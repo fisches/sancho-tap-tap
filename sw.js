@@ -1,5 +1,5 @@
-const SHELL_CACHE = "sancho-tap-tap-shell-v23";
-const RUNTIME_CACHE = "sancho-tap-tap-runtime-v23";
+const SHELL_CACHE = "sancho-tap-tap-shell-v24";
+const RUNTIME_CACHE = "sancho-tap-tap-runtime-v24";
 const APP_SHELL = [
   "./",
   "./index.html",
