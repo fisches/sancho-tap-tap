@@ -175,6 +175,7 @@ const soundConfigs = {
 };
 const defaultTimerMode = "10";
 const timerLabels = {
+  3: "3 min",
   5: "5 min",
   10: "10 min",
   15: "15 min",
@@ -346,11 +347,11 @@ const gamepadState = {
   resumeFocusIndex: 0
 };
 const menuGrid = [
-  [0, 1, 2, 3],
-  [4, 5, 6, 7],
-  [8, 9, 10],
-  [11, 12],
-  [13]
+  [0, 1, 2, 3, 4],
+  [5, 6, 7, 8],
+  [9, 10, 11],
+  [12, 13],
+  [14]
 ];
 const gamepadConfig = {
   deadzone: 0.24,
@@ -2051,20 +2052,21 @@ function activateFocusedMenuItem() {
 
 function setMenuFocusForState() {
   const focusMap = {
-    "timer:5": 0,
-    "timer:10": 1,
-    "timer:15": 2,
-    "timer:off": 3,
-    "universe:surprise": 4,
-    "universe:animals": 5,
-    "universe:vehicles": 6,
-    "universe:magic": 7,
-    "energy:gentle": 8,
-    "energy:normal": 9,
-    "energy:party": 10,
-    "sound:off": 11,
-    "sound:soft": 12,
-    play: 13
+    "timer:3": 0,
+    "timer:5": 1,
+    "timer:10": 2,
+    "timer:15": 3,
+    "timer:off": 4,
+    "universe:surprise": 5,
+    "universe:animals": 6,
+    "universe:vehicles": 7,
+    "universe:magic": 8,
+    "energy:gentle": 9,
+    "energy:normal": 10,
+    "energy:party": 11,
+    "sound:off": 12,
+    "sound:soft": 13,
+    play: 14
   };
   gamepadState.menuFocusIndex =
     focusMap[`timer:${state.timerMode}`] ??
