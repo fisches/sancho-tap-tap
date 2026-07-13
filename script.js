@@ -489,13 +489,13 @@ function playTapSound() {
   playTone(baseFrequency * 1.5, 0.025, 0.055, 0.22, "triangle");
 }
 
-function playHaptic(pattern, minIntervalMs = 120) {
+function playHaptic(pattern, minIntervalMs = 120, options = {}) {
   if (typeof navigator.vibrate !== "function") {
     return false;
   }
 
   const now = performance.now();
-  if (now - lastHapticAt < minIntervalMs) {
+  if (!options.force && now - lastHapticAt < minIntervalMs) {
     return false;
   }
 
@@ -1741,7 +1741,7 @@ function updateSessionTimerLabel() {
 
   if (remainingMs <= 10000 && !state.sessionFinalCuePlayed) {
     state.sessionFinalCuePlayed = true;
-    playHaptic(10, 1000);
+    playHaptic(10, 1000, { force: true });
   }
 }
 
