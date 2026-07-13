@@ -217,6 +217,10 @@ const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
   /arm|aarch64|raspberry/i.test(navigator.userAgent);
+const reducedMotionQuery =
+  typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
 const storageKey = "sancho-tap-tap:settings";
 const performanceProfiles = {
   normal: { maxBursts: 24, sparkleRange: [3, 5], ring: true, primeCount: 2, rainBursts: 2, sizeScale: 1 },
@@ -621,6 +625,10 @@ function stopSpecialProgressLoop({ resetProgress = true } = {}) {
 }
 
 function getResolvedPerformanceMode() {
+  if (reducedMotionQuery?.matches) {
+    return "ultra";
+  }
+
   return lowPowerMode ? "light" : "normal";
 }
 
@@ -2593,6 +2601,16 @@ function handleFullscreenChange() {
   }
 }
 
+function handleReducedMotionChange() {
+  applyModeClasses();
+  if (state.isPlaying && !state.isEnding) {
+    clearBursts();
+    clearPrimeTimeouts();
+    scheduleNextSpecialEvent();
+    updateSpecialProgress();
+  }
+}
+
 loadSavedSettings();
 applyUniverseTheme();
 applyModeClasses();
@@ -2625,6 +2643,7 @@ window.addEventListener("gamepadconnected", handleGamepadConnected);
 window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
 document.addEventListener("visibilitychange", handleVisibilityChange);
 document.addEventListener("fullscreenchange", handleFullscreenChange);
+reducedMotionQuery?.addEventListener?.("change", handleReducedMotionChange);
 
 document.addEventListener(
   "gesturestart",
