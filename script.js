@@ -2019,7 +2019,7 @@ function clamp(value, min, max) {
 }
 
 function setGamepadStatusLabel() {
-  gamepadStatus.textContent = gamepadState.connected ? "manette connectee" : "manette inactive";
+  gamepadStatus.textContent = gamepadState.connected ? "manette prete" : "manette inactive";
   playground.classList.toggle("has-gamepad", gamepadState.connected);
   updateHintLabel();
   updateResumeFocus();
@@ -3296,6 +3296,12 @@ function handleGamepadConnected(event) {
 function handleGamepadDisconnected(event) {
   if (gamepadState.activeIndex === event.gamepad.index) {
     gamepadState.activeIndex = null;
+    gamepadState.connected = false;
+    stopGamepadSpawn();
+    gamepadState.previousButtons.primary = false;
+    gamepadState.previousButtons.menu = false;
+    setGamepadStatusLabel();
+    updateMenuFocus();
   }
 }
 
