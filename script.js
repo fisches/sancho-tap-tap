@@ -783,6 +783,7 @@ function stopSpecialProgressLoop({ resetProgress = true } = {}) {
     specialProgressFrameId = null;
   }
   if (resetProgress && specialProgress) {
+    specialProgress.classList.remove("is-awaiting-input");
     specialProgress.style.setProperty("--special-progress", "0");
   }
 }
