@@ -2896,36 +2896,45 @@ async function startGame() {
 }
 
 async function handleResumeAction() {
-  if (state.fullscreenWanted && !document.fullscreenElement) {
-    const enteredFullscreen = await ensureFullscreen();
-    if (!enteredFullscreen) {
-      showResumeScreen(
-        "plein ecran requis",
-        state.pendingStart
-          ? "touche une fois pour passer en plein ecran avant de lancer la partie."
-          : "retourne dans le plein ecran pour reprendre tranquillement.",
-        state.pendingStart ? "entrer en plein ecran" : "plein ecran",
-        state.pendingStart
-      );
-      return;
-    }
-  }
-
-  hideResumeScreen();
-
-  if (state.pendingStart) {
-    state.remainingSessionMs = getTimerDurationMs();
-    startSessionCore();
+  if (sessionStartInFlight || (!state.isPausedForFocus && !state.pendingStart)) {
     return;
   }
 
-  if (state.isPlaying && !state.isEnding) {
-    resumeSpecialCooldown();
-    startSessionTimer();
-    startSpecialProgressLoop();
-    lastGameplayActivityAt = Date.now();
-    scheduleIdleNudge();
-    requestScreenWakeLock();
+  sessionStartInFlight = true;
+  try {
+    if (state.fullscreenWanted && !document.fullscreenElement) {
+      const enteredFullscreen = await ensureFullscreen();
+      if (!enteredFullscreen) {
+        showResumeScreen(
+          "plein ecran requis",
+          state.pendingStart
+            ? "touche une fois pour passer en plein ecran avant de lancer la partie."
+            : "retourne dans le plein ecran pour reprendre tranquillement.",
+          state.pendingStart ? "entrer en plein ecran" : "plein ecran",
+          state.pendingStart
+        );
+        return;
+      }
+    }
+
+    hideResumeScreen();
+
+    if (state.pendingStart) {
+      state.remainingSessionMs = getTimerDurationMs();
+      startSessionCore();
+      return;
+    }
+
+    if (state.isPlaying && !state.isEnding) {
+      resumeSpecialCooldown();
+      startSessionTimer();
+      startSpecialProgressLoop();
+      lastGameplayActivityAt = Date.now();
+      scheduleIdleNudge();
+      requestScreenWakeLock();
+    }
+  } finally {
+    sessionStartInFlight = false;
   }
 }
 
