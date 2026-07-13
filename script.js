@@ -334,6 +334,8 @@ let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
 let storagePersistRequested = false;
 let sessionStartInFlight = false;
+let serviceWorkerRefreshPending = false;
+let serviceWorkerWaitingRegistration = null;
 let lastGameplayActivityAt = 0;
 let idleNudgeCount = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
@@ -2122,6 +2124,7 @@ function closeParentPanel() {
   if (state.isSessionLocked) {
     setOverlayActive(lockScreen, true);
     focusAction(lockParentAction);
+    activatePendingServiceWorker();
     return;
   }
 
@@ -2833,6 +2836,7 @@ function showMenu() {
   setMenuFocusForState();
   updateParentFocus();
   focusAction(playButton);
+  activatePendingServiceWorker();
 }
 
 function endSessionSoftly() {
@@ -2865,6 +2869,7 @@ function endSessionSoftly() {
     clearEndingCelebration();
     applyModeClasses();
     focusAction(lockParentAction);
+    activatePendingServiceWorker();
   }, 2600);
 }
 
@@ -3147,10 +3152,46 @@ function registerServiceWorker() {
 
   window.addEventListener("load", () => {
     requestPersistentStorage();
-    navigator.serviceWorker.register("./sw.js").catch((error) => {
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!serviceWorkerRefreshPending) {
+        return;
+      }
+
+      window.location.reload();
+    });
+
+    navigator.serviceWorker.register("./sw.js").then((registration) => {
+      serviceWorkerWaitingRegistration = registration;
+      activatePendingServiceWorker();
+      registration.addEventListener("updatefound", () => {
+        registration.installing?.addEventListener("statechange", () => {
+          if (registration.waiting) {
+            serviceWorkerWaitingRegistration = registration;
+            activatePendingServiceWorker();
+          }
+        });
+      });
+    }).catch((error) => {
       console.error("Service worker error", error);
     });
   });
+}
+
+function canRefreshServiceWorkerNow() {
+  return !state.isPlaying &&
+    !state.pendingStart &&
+    !state.isPausedForFocus &&
+    !state.isParentPanelOpen;
+}
+
+function activatePendingServiceWorker() {
+  const waitingWorker = serviceWorkerWaitingRegistration?.waiting;
+  if (!waitingWorker || !navigator.serviceWorker?.controller || !canRefreshServiceWorkerNow()) {
+    return;
+  }
+
+  serviceWorkerRefreshPending = true;
+  waitingWorker.postMessage({ type: "SKIP_WAITING" });
 }
 
 function handleGamepadConnected(event) {
@@ -3193,6 +3234,7 @@ function handlePageHide() {
 function handlePageShow() {
   syncFullscreenState();
   updateResumeStatus();
+  activatePendingServiceWorker();
   if (canInteractWithGameplay()) {
     requestScreenWakeLock();
   }
