@@ -1582,6 +1582,11 @@ function resetPointerCoverage() {
 }
 
 function resetPointerTrail() {
+  activePointerTrails.forEach((_, pointerId) => {
+    if (playground.hasPointerCapture?.(pointerId)) {
+      playground.releasePointerCapture?.(pointerId);
+    }
+  });
   activePointerTrails.clear();
 }
 
