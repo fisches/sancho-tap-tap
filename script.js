@@ -624,6 +624,11 @@ function playIdleNudgeHaptic() {
 }
 
 function playSpecialHaptic() {
+  if (getResolvedPerformanceMode() === "ultra") {
+    playHaptic(10, 650);
+    return;
+  }
+
   playHaptic([18, 35, 18], 650);
 }
 
