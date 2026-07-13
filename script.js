@@ -1683,6 +1683,7 @@ function syncFullscreenState() {
 
   const isFullscreen = Boolean(document.fullscreenElement);
   fullscreenButton.textContent = isFullscreen ? "quitter plein ecran" : "plein ecran";
+  fullscreenButton.setAttribute("aria-label", isFullscreen ? "Quitter le plein ecran" : "Plein ecran");
   playground.classList.toggle("is-fullscreen", isFullscreen);
 }
 
