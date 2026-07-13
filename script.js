@@ -377,8 +377,8 @@ const state = {
 const gamepadState = {
   activeIndex: null,
   connected: false,
-  cursorX: window.innerWidth / 2,
-  cursorY: window.innerHeight / 2,
+  cursorX: getViewportWidth() / 2,
+  cursorY: getViewportHeight() / 2,
   menuFocusIndex: menuFocusables.length - 1,
   lastMoveAt: 0,
   spawnIntervalId: null,
@@ -873,7 +873,7 @@ function spawnBurst(x, y, options = {}) {
   mainEmoji.style.setProperty("--burst-scale", sizeMultiplier.toFixed(2));
   let burstLifetime = getSpeedSetting().burstLifetime;
   if (emojiVariant === "rain") {
-    const fallDistance = Math.max(window.innerHeight - y + 180, 260);
+    const fallDistance = Math.max(getViewportHeight() - y + 180, 260);
     mainEmoji.classList.add("rain-drop");
     mainEmoji.style.animationDuration = "7800ms";
     mainEmoji.style.setProperty("--rain-drift", `${(Math.random() * 220 - 110).toFixed(2)}px`);
@@ -1052,8 +1052,8 @@ function spawnHeroSpecial(x, y) {
 
 function spawnRainbowSpecial(x, y) {
   const overlay = createSpecialOverlay("special-rainbow", x, y);
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const width = getViewportWidth();
+  const height = getViewportHeight();
   const arcColors = [
     "#ff5d67",
     "#ff9d3b",
@@ -1157,8 +1157,8 @@ function setParadePath(node, startX, endX, y, delay, direction) {
 }
 
 function spawnParadeSpecial(x, y) {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const width = getViewportWidth();
+  const height = getViewportHeight();
   const overlay = createSpecialOverlay("special-parade", width / 2, height / 2);
   const pool = getParadeEmojiPool();
   const rows = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 5 : 3);
@@ -1188,10 +1188,12 @@ function spawnParadeSpecial(x, y) {
 }
 
 function spawnPartySpecial(x, y) {
+  const width = getViewportWidth();
+  const height = getViewportHeight();
   const overlay = createSpecialOverlay("special-party", x, y);
   const center = createSpecialEmojiNode(
-    clamp(x, 80, window.innerWidth - 80),
-    clamp(y, 80, window.innerHeight - 80),
+    clamp(x, 80, width - 80),
+    clamp(y, 80, height - 80),
     pickRandom(["🎉", "🥳", "🎈", "🪄", "👑"]),
     "special-party-hero",
     2.35
@@ -1204,8 +1206,8 @@ function spawnPartySpecial(x, y) {
     scheduleSpecialTask(() => {
       const point = nextDistributedPoint();
       spawnBurst(
-        clamp(point.x + randomBetween(-28, 28), 36, window.innerWidth - 36),
-        clamp(point.y + randomBetween(-32, 32), 36, window.innerHeight - 36),
+        clamp(point.x + randomBetween(-28, 28), 36, width - 36),
+        clamp(point.y + randomBetween(-32, 32), 36, height - 36),
         { sizeMultiplier: 0.95 + Math.random() * 0.32 }
       );
     }, 180 + index * 180);
@@ -1447,9 +1449,11 @@ function triggerPlayModeBursts(x, y, options = {}) {
 }
 
 function triggerTrailBurst(x, y) {
+  const viewportWidth = getViewportWidth();
+  const viewportHeight = getViewportHeight();
   spawnBurst(
-    clamp(x, 34, window.innerWidth - 34),
-    clamp(y, 34, window.innerHeight - 34),
+    clamp(x, 34, viewportWidth - 34),
+    clamp(y, 34, viewportHeight - 34),
     { sizeMultiplier: 0.78 }
   );
 }
@@ -2575,6 +2579,7 @@ function handlePointer(event) {
   const pointY = event.clientY;
   activePointerTrails.set(event.pointerId, {
     lastBurstAt: Date.now(),
+    burstCount: 0,
     point: { x: pointX, y: pointY }
   });
 
@@ -2613,10 +2618,16 @@ function handlePointerTrail(event) {
 
   trail.lastBurstAt = now;
   trail.point = { x: pointX, y: pointY };
+  trail.burstCount += 1;
   hideHint();
   playTrailHaptic();
   recordGameplayActivity();
-  triggerTrailBurst(pointX, pointY);
+  if (trail.burstCount % 2 === 0) {
+    const spreadPoint = nextDistributedPoint();
+    triggerTrailBurst(spreadPoint.x, spreadPoint.y);
+  } else {
+    triggerTrailBurst(pointX, pointY);
+  }
   maybeTriggerSpecialEvent(pointX, pointY);
 }
 
@@ -3148,8 +3159,8 @@ async function exitFullscreenToMenu() {
 }
 
 function primeFirstView() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const width = getViewportWidth();
+  const height = getViewportHeight();
   const profile = getPerformanceProfile();
 
   const entries = [
