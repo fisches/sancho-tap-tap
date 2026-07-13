@@ -2971,11 +2971,9 @@ function showMenu() {
   scheduleNextSpecialEvent();
   endSpecialEvent();
   releaseScreenWakeLock();
-  releaseAllKeys();
-  clearPrimeTimeouts();
+  stopAllInteractiveInput();
   clearSessionTimer();
   stopSpecialProgressLoop();
-  clearIdleNudge();
   resetIdleNudgeState();
   if (endingTimeoutId) {
     window.clearTimeout(endingTimeoutId);
