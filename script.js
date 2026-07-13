@@ -1577,6 +1577,7 @@ function closeParentPanel() {
   updateParentFocus();
 
   if (state.isSessionLocked) {
+    focusAction(parentHotspot);
     return;
   }
 
@@ -2103,6 +2104,7 @@ function endSessionSoftly() {
     lockScreen.setAttribute("aria-hidden", "false");
     clearEndingCelebration();
     applyModeClasses();
+    focusAction(parentHotspot);
   }, 2600);
 }
 
