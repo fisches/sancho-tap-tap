@@ -257,6 +257,8 @@ const resumeStatus = document.getElementById("resumeStatus");
 const resumeButton = document.getElementById("resumeButton");
 const resumeMenuButton = document.getElementById("resumeMenuButton");
 const parentScreen = document.getElementById("parentScreen");
+const parentTitle = document.getElementById("parentTitle");
+const parentText = document.getElementById("parentText");
 const parentResumeAction = document.getElementById("parentResumeAction");
 const parentRestartAction = document.getElementById("parentRestartAction");
 const parentMenuAction = document.getElementById("parentMenuAction");
@@ -1704,6 +1706,10 @@ function handleParentKeydown(event) {
 
 function updateParentActions() {
   parentResumeAction.hidden = state.isSessionLocked;
+  parentTitle.textContent = state.isSessionLocked ? "partie terminee" : "sortie protegee";
+  parentText.textContent = state.isSessionLocked
+    ? "relance une partie ou retourne au menu."
+    : "reprends, relance ou retourne au menu.";
 }
 
 function getParentTimerSummaryLabel() {
@@ -1919,7 +1925,7 @@ function closeParentPanel() {
   updateParentFocus();
 
   if (state.isSessionLocked) {
-    focusAction(parentHotspot);
+    focusAction(lockParentAction);
     return;
   }
 
