@@ -645,6 +645,11 @@ function playIdleNudgeSound() {
     return;
   }
 
+  if (getResolvedPerformanceMode() === "ultra") {
+    playTone(520, 0, 0.045, 0.14, "sine");
+    return;
+  }
+
   playTone(520, 0, 0.055, 0.18, "sine");
   playTone(660, 0.06, 0.055, 0.14, "triangle");
 }
