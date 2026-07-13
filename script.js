@@ -519,6 +519,15 @@ function playEndingHaptic() {
   playHaptic([14, 45, 24], 650);
 }
 
+function playFinalTimerSound() {
+  if (state.soundMode === "off") {
+    return;
+  }
+
+  playTone(784, 0, 0.08, 0.28, "triangle");
+  playTone(659, 0.08, 0.1, 0.24, "sine");
+}
+
 function playSpecialSound(kind) {
   if (state.soundMode === "off") {
     return;
@@ -1741,6 +1750,7 @@ function updateSessionTimerLabel() {
 
   if (remainingMs <= 10000 && !state.sessionFinalCuePlayed) {
     state.sessionFinalCuePlayed = true;
+    playFinalTimerSound();
     playHaptic(10, 1000, { force: true });
   }
 }
