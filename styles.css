@@ -1033,6 +1033,7 @@ button {
 
 .resume-button.is-focused,
 .parent-action.is-focused,
+.lock-action.is-focused,
 .resume-menu-button.is-focused,
 .resume-button:focus,
 .parent-action:focus,

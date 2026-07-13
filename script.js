@@ -2181,6 +2181,21 @@ function handleGamepadResumeOverlay(horizontal, primaryPressed) {
   }
 }
 
+function handleGamepadLockScreen(gamepad, primaryPressed) {
+  const comboPressed = maybeStartGamepadMenuCombo(gamepad);
+  if (comboPressed) {
+    gamepadState.previousButtons.menu = true;
+    return;
+  }
+
+  if (primaryPressed && !gamepadState.previousButtons.primary) {
+    lockParentAction.click();
+  }
+
+  gamepadState.previousButtons.primary = primaryPressed;
+  gamepadState.previousButtons.menu = false;
+}
+
 function handleGamepadGameplay(gamepad) {
   const comboPressed = maybeStartGamepadMenuCombo(gamepad);
   const primaryPressed = !comboPressed && isGamepadBurstPressed(gamepad);
@@ -2234,9 +2249,7 @@ function pollGamepads() {
     } else if (state.isPlaying) {
       handleGamepadGameplay(activeGamepad);
     } else if (state.isSessionLocked) {
-      const comboPressed = maybeStartGamepadMenuCombo(activeGamepad);
-      gamepadState.previousButtons.primary = false;
-      gamepadState.previousButtons.menu = comboPressed;
+      handleGamepadLockScreen(activeGamepad, primaryPressed);
     } else {
       const comboPressed = maybeStartGamepadMenuCombo(activeGamepad);
       if (comboPressed) {
@@ -2417,6 +2430,10 @@ function handleKeydown(event) {
     return;
   }
 
+  if (handleLockKeydown(event)) {
+    return;
+  }
+
   if (
     isBlockedGameplayKey(event) &&
     (state.isPlaying || state.isPausedForFocus || state.isParentPanelOpen || state.isSessionLocked || state.pendingStart)
@@ -2456,6 +2473,21 @@ function handleKeydown(event) {
   }, getSpeedSetting().keyBurstInterval);
 
   heldKeys.set(event.code, intervalId);
+}
+
+function handleLockKeydown(event) {
+  if (!state.isSessionLocked || state.isParentPanelOpen) {
+    return false;
+  }
+
+  if (event.code === "Enter" || event.code === "Space") {
+    event.preventDefault();
+    event.stopPropagation();
+    lockParentAction.click();
+    return true;
+  }
+
+  return false;
 }
 
 function releaseKey(event) {
@@ -2564,7 +2596,7 @@ function endSessionSoftly() {
     lockScreen.setAttribute("aria-hidden", "false");
     clearEndingCelebration();
     applyModeClasses();
-    focusAction(parentHotspot);
+    focusAction(lockParentAction);
   }, 2600);
 }
 
