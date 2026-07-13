@@ -946,6 +946,13 @@ button {
   line-height: 1.5;
 }
 
+.resume-status {
+  margin: 0.75rem 0 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
 .lock-combo strong {
   color: var(--ink);
 }

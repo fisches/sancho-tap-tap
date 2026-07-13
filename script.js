@@ -253,6 +253,7 @@ const specialProgressCue = document.getElementById("specialProgressCue");
 const resumeScreen = document.getElementById("resumeScreen");
 const resumeTitle = document.getElementById("resumeTitle");
 const resumeText = document.getElementById("resumeText");
+const resumeStatus = document.getElementById("resumeStatus");
 const resumeButton = document.getElementById("resumeButton");
 const resumeMenuButton = document.getElementById("resumeMenuButton");
 const parentScreen = document.getElementById("parentScreen");
@@ -1487,10 +1488,33 @@ function setResumeContent(title, text, actionLabel = "reprendre", canReturnMenu 
   resumeText.textContent = text;
   resumeButton.textContent = actionLabel;
   resumeMenuButton.hidden = !canReturnMenu;
+  updateResumeStatus();
   if (gamepadState.resumeFocusIndex >= getResumeAvailableActions().length) {
     gamepadState.resumeFocusIndex = 0;
   }
   updateResumeFocus();
+}
+
+function getResumeStatusLabel() {
+  if (state.pendingStart || state.isSessionLocked) {
+    return "";
+  }
+
+  if (state.timerMode === "off") {
+    return "minuteur infini";
+  }
+
+  if (Number.isFinite(state.remainingSessionMs) && state.remainingSessionMs > 0) {
+    return `pause - ${formatRemainingTime(state.remainingSessionMs)} restant`;
+  }
+
+  return "";
+}
+
+function updateResumeStatus() {
+  const label = getResumeStatusLabel();
+  resumeStatus.textContent = label;
+  resumeStatus.hidden = !label;
 }
 
 function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu = false) {
@@ -1510,6 +1534,8 @@ function hideResumeScreen() {
   state.isPausedForFocus = false;
   playground.classList.remove("is-paused");
   resumeScreen.setAttribute("aria-hidden", "true");
+  resumeStatus.textContent = "";
+  resumeStatus.hidden = true;
   updateResumeFocus();
 }
 
