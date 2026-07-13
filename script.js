@@ -282,6 +282,7 @@ let specialProgressFrameId = null;
 let specialEventTaskIds = [];
 let idleNudgeTimeoutId = null;
 let screenWakeLock = null;
+let screenWakeLockReleaseWanted = false;
 let lastGameplayActivityAt = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
 let pointerTapZone = "";
@@ -1694,9 +1695,15 @@ async function requestScreenWakeLock() {
   }
 
   try {
+    screenWakeLockReleaseWanted = false;
     screenWakeLock = await navigator.wakeLock.request("screen");
     screenWakeLock.addEventListener?.("release", () => {
       screenWakeLock = null;
+      if (!screenWakeLockReleaseWanted && !document.hidden && canInteractWithGameplay()) {
+        window.setTimeout(() => {
+          requestScreenWakeLock();
+        }, 250);
+      }
     });
   } catch (error) {
     screenWakeLock = null;
@@ -1710,10 +1717,13 @@ async function releaseScreenWakeLock() {
 
   const lock = screenWakeLock;
   screenWakeLock = null;
+  screenWakeLockReleaseWanted = true;
   try {
     await lock.release();
   } catch (error) {
     // Some browsers auto-release on visibility changes.
+  } finally {
+    screenWakeLockReleaseWanted = false;
   }
 }
 
@@ -1749,12 +1759,12 @@ function openParentPanel() {
     return;
   }
 
-  releaseScreenWakeLock();
   stopAllInteractiveInput();
   pauseSpecialCooldown();
   endSpecialEvent();
   pauseSessionTimer();
   state.isParentPanelOpen = true;
+  releaseScreenWakeLock();
   gamepadState.parentFocusIndex = 0;
   updateParentActions();
   updateParentSummary();
@@ -2499,12 +2509,12 @@ function pauseForInterruption(title, text) {
     return;
   }
 
-  releaseScreenWakeLock();
   stopAllInteractiveInput();
   pauseSpecialCooldown();
   endSpecialEvent();
   pauseSessionTimer();
   showResumeScreen(title, text);
+  releaseScreenWakeLock();
   stopSpecialProgressLoop({ resetProgress: false });
 }
 
