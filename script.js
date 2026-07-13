@@ -1869,6 +1869,10 @@ function pollGamepads() {
       gamepadState.previousButtons.primary = primaryPressed;
     } else if (state.isPlaying) {
       handleGamepadGameplay(activeGamepad);
+    } else if (state.isSessionLocked) {
+      const comboPressed = maybeStartGamepadMenuCombo(activeGamepad);
+      gamepadState.previousButtons.primary = false;
+      gamepadState.previousButtons.menu = comboPressed;
     } else {
       const comboPressed = maybeStartGamepadMenuCombo(activeGamepad);
       if (comboPressed) {
