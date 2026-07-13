@@ -209,7 +209,9 @@ const blockedGameplayKeyCodes = new Set([
   "BrowserBack", "BrowserForward", "BrowserRefresh", "BrowserHome",
   "AudioVolumeMute", "AudioVolumeDown", "AudioVolumeUp",
   "MediaPlayPause", "MediaStop", "MediaTrackPrevious", "MediaTrackNext",
-  "BrightnessDown", "BrightnessUp"
+  "BrightnessDown", "BrightnessUp",
+  "LaunchMail", "LaunchApp1", "LaunchApp2", "Select",
+  "Power", "Sleep", "WakeUp", "Eject"
 ]);
 for (let keyIndex = 1; keyIndex <= 12; keyIndex += 1) {
   blockedGameplayKeyCodes.add(`F${keyIndex}`);
