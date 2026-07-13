@@ -1760,6 +1760,7 @@ function stopGamepadSpawn() {
 function stopAllInteractiveInput() {
   releaseAllKeys();
   stopGamepadSpawn();
+  resetPointerTrail();
   clearMenuReturnCombo();
   clearIdleNudge();
 }
