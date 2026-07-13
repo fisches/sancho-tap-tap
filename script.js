@@ -1329,6 +1329,7 @@ function clearSessionTimer() {
   state.sessionEndsAt = null;
   sessionTimer.textContent = "";
   playground.classList.remove("has-timer");
+  playground.classList.remove("is-timer-low");
 }
 
 function pauseSessionTimer() {
@@ -1592,10 +1593,13 @@ function formatRemainingTime(remainingMs) {
 function updateSessionTimerLabel() {
   if (!state.sessionEndsAt) {
     sessionTimer.textContent = "";
+    playground.classList.remove("is-timer-low");
     return;
   }
 
-  sessionTimer.textContent = formatRemainingTime(state.sessionEndsAt - Date.now());
+  const remainingMs = state.sessionEndsAt - Date.now();
+  sessionTimer.textContent = formatRemainingTime(remainingMs);
+  playground.classList.toggle("is-timer-low", remainingMs <= 60000);
 }
 
 function clamp(value, min, max) {
