@@ -2187,6 +2187,10 @@ function canInteractWithGameplay() {
 }
 
 function isGamepadBurstPressed(gamepad) {
+  return isGamepadActionPressed(gamepad);
+}
+
+function isGamepadActionPressed(gamepad) {
   return gamepad.buttons.some((button, index) => index !== 8 && index !== 9 && button?.pressed);
 }
 
@@ -2606,7 +2610,7 @@ function pollGamepads() {
       Math.abs(horizontal) > gamepadConfig.deadzone ? horizontal : dpadHorizontal;
     const menuVertical =
       Math.abs(vertical) > gamepadConfig.deadzone ? vertical : dpadVertical;
-    const primaryPressed = Boolean(activeGamepad.buttons[0]?.pressed || activeGamepad.buttons[2]?.pressed);
+    const primaryPressed = isGamepadActionPressed(activeGamepad);
 
     if (state.isParentPanelOpen) {
       handleGamepadParentPanel(activeGamepad, menuHorizontal, primaryPressed);
