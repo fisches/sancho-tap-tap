@@ -3315,7 +3315,8 @@ function canRefreshServiceWorkerNow() {
   return !state.isPlaying &&
     !state.pendingStart &&
     !state.isPausedForFocus &&
-    !state.isParentPanelOpen;
+    !state.isParentPanelOpen &&
+    !state.isSessionLocked;
 }
 
 function activatePendingServiceWorker() {
