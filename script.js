@@ -218,9 +218,10 @@ const blockedKioskShortcutCodes = new Set([
   "Minus", "Equal", "BracketLeft", "BracketRight", "Backslash", "Tab"
 ]);
 const distributedPointCells = [
-  [0.18, 0.2], [0.5, 0.18], [0.82, 0.2],
-  [0.24, 0.48], [0.76, 0.48],
-  [0.18, 0.78], [0.5, 0.82], [0.82, 0.78]
+  [0.14, 0.16], [0.38, 0.13], [0.64, 0.16], [0.86, 0.14],
+  [0.24, 0.36], [0.5, 0.34], [0.76, 0.38],
+  [0.12, 0.58], [0.36, 0.62], [0.64, 0.58], [0.88, 0.64],
+  [0.22, 0.82], [0.5, 0.86], [0.78, 0.82]
 ];
 const pointerRepeatWindowMs = 2600;
 const parentHotspotConfirmMs = 1200;
@@ -2732,11 +2733,11 @@ function nextDistributedPoint() {
   const marginY = Math.max(viewportHeight * 0.1, 56);
   const safeWidth = Math.max(viewportWidth - marginX * 2, 1);
   const safeHeight = Math.max(viewportHeight - marginY * 2, 1);
-  const jump = 2 + Math.floor(Math.random() * 4);
+  const jump = 3 + Math.floor(Math.random() * 5);
   distributedPointCursor = (distributedPointCursor + jump) % distributedPointCells.length;
   const [cellX, cellY] = distributedPointCells[distributedPointCursor];
-  const jitterX = randomBetween(-0.11, 0.11);
-  const jitterY = randomBetween(-0.12, 0.12);
+  const jitterX = randomBetween(-0.075, 0.075);
+  const jitterY = randomBetween(-0.085, 0.085);
 
   return {
     x: marginX + clamp(cellX + jitterX, 0, 1) * safeWidth,
