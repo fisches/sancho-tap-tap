@@ -703,6 +703,7 @@ function createEmoji(x, y, emojiChar, variant = "main") {
   emoji.className = variant === "sparkle" ? "emoji emoji-image sparkle" : "emoji emoji-image";
   emoji.alt = "";
   emoji.decoding = "async";
+  emoji.draggable = false;
   emoji.loading = "eager";
   emoji.style.left = `${x}px`;
   emoji.style.top = `${y}px`;
@@ -2443,6 +2444,19 @@ function handleContextMenu(event) {
   }
 }
 
+function handleKioskNativeGesture(event) {
+  if (
+    state.isPlaying ||
+    state.isPausedForFocus ||
+    state.isParentPanelOpen ||
+    state.isSessionLocked ||
+    state.pendingStart
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
 function nextDistributedPoint() {
   const marginX = Math.max(window.innerWidth * 0.08, 48);
   const marginY = Math.max(window.innerHeight * 0.1, 56);
@@ -3022,6 +3036,8 @@ window.addEventListener("gamepadconnected", handleGamepadConnected);
 window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
 document.addEventListener("visibilitychange", handleVisibilityChange);
 document.addEventListener("fullscreenchange", handleFullscreenChange);
+document.addEventListener("dragstart", handleKioskNativeGesture);
+document.addEventListener("selectstart", handleKioskNativeGesture);
 reducedMotionQuery?.addEventListener?.("change", handleReducedMotionChange);
 
 document.addEventListener(
