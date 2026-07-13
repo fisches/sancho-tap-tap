@@ -1383,6 +1383,13 @@ function clearMenuReturnCombo() {
 }
 
 function syncFullscreenState() {
+  const fullscreenSupported = typeof document.documentElement.requestFullscreen === "function";
+  fullscreenButton.hidden = !fullscreenSupported;
+  if (!fullscreenSupported) {
+    playground.classList.remove("is-fullscreen");
+    return;
+  }
+
   const isFullscreen = Boolean(document.fullscreenElement);
   fullscreenButton.textContent = isFullscreen ? "quitter plein ecran" : "plein ecran";
   playground.classList.toggle("is-fullscreen", isFullscreen);
@@ -2399,6 +2406,11 @@ function handleOptionClick(event) {
 }
 
 async function toggleFullscreen() {
+  if (typeof document.documentElement.requestFullscreen !== "function") {
+    syncFullscreenState();
+    return;
+  }
+
   try {
     if (!document.fullscreenElement) {
       await document.documentElement.requestFullscreen();
@@ -2412,6 +2424,12 @@ async function toggleFullscreen() {
 }
 
 async function ensureFullscreen() {
+  if (typeof document.documentElement.requestFullscreen !== "function") {
+    state.fullscreenWanted = false;
+    syncFullscreenState();
+    return true;
+  }
+
   if (document.fullscreenElement) {
     syncFullscreenState();
     return true;
@@ -2442,7 +2460,7 @@ function pauseForInterruption(title, text) {
 }
 
 async function startGame() {
-  state.fullscreenWanted = true;
+  state.fullscreenWanted = typeof document.documentElement.requestFullscreen === "function";
   state.pendingStart = true;
   const enteredFullscreen = await ensureFullscreen();
 
