@@ -1551,11 +1551,16 @@ function updateResumeStatus() {
   resumeStatus.hidden = !label;
 }
 
+function setOverlayActive(screen, isActive) {
+  screen.setAttribute("aria-hidden", String(!isActive));
+  screen.inert = !isActive;
+}
+
 function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu = false) {
   setResumeContent(title, text, actionLabel, canReturnMenu);
   state.isPausedForFocus = true;
   playground.classList.add("is-paused");
-  resumeScreen.setAttribute("aria-hidden", "false");
+  setOverlayActive(resumeScreen, true);
   gamepadState.resumeFocusIndex = 0;
   gamepadState.previousButtons.primary = false;
   gamepadState.previousDirections.left = false;
@@ -1567,7 +1572,7 @@ function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu 
 function hideResumeScreen() {
   state.isPausedForFocus = false;
   playground.classList.remove("is-paused");
-  resumeScreen.setAttribute("aria-hidden", "true");
+  setOverlayActive(resumeScreen, false);
   resumeStatus.textContent = "";
   resumeStatus.hidden = true;
   updateResumeFocus();
@@ -1960,7 +1965,9 @@ function openParentPanel() {
   updateParentActions();
   setDefaultParentFocus();
   updateParentSummary();
-  parentScreen.setAttribute("aria-hidden", "false");
+  setOverlayActive(resumeScreen, false);
+  setOverlayActive(lockScreen, false);
+  setOverlayActive(parentScreen, true);
   playground.classList.add("is-parent-open");
   stopSpecialProgressLoop({ resetProgress: false });
   updateParentFocus();
@@ -1973,11 +1980,12 @@ function closeParentPanel() {
   }
 
   state.isParentPanelOpen = false;
-  parentScreen.setAttribute("aria-hidden", "true");
+  setOverlayActive(parentScreen, false);
   playground.classList.remove("is-parent-open");
   updateParentFocus();
 
   if (state.isSessionLocked) {
+    setOverlayActive(lockScreen, true);
     focusAction(lockParentAction);
     return;
   }
@@ -2004,7 +2012,7 @@ function closeParentPanel() {
 
 async function restartCurrentSession() {
   state.fullscreenWanted = true;
-  parentScreen.setAttribute("aria-hidden", "true");
+  setOverlayActive(parentScreen, false);
   playground.classList.remove("is-parent-open");
   state.isParentPanelOpen = false;
   updateParentFocus();
@@ -2621,9 +2629,10 @@ function showMenu() {
   playground.classList.remove("is-paused");
   playground.classList.remove("is-parent-open");
   menuScreen.removeAttribute("hidden");
-  resumeScreen.setAttribute("aria-hidden", "true");
-  parentScreen.setAttribute("aria-hidden", "true");
-  lockScreen.setAttribute("aria-hidden", "true");
+  setOverlayActive(resumeScreen, false);
+  setOverlayActive(parentScreen, false);
+  setOverlayActive(lockScreen, false);
+  setOverlayActive(endingScreen, false);
   applyModeClasses();
   setMenuFocusForState();
   updateParentFocus();
@@ -2646,17 +2655,17 @@ function endSessionSoftly() {
   clearIdleNudge();
   spawnEndingCelebration();
   playground.classList.add("is-ending");
-  endingScreen.removeAttribute("aria-hidden");
+  setOverlayActive(endingScreen, true);
 
   endingTimeoutId = window.setTimeout(() => {
     endingTimeoutId = null;
-    endingScreen.setAttribute("aria-hidden", "true");
+    setOverlayActive(endingScreen, false);
     state.isPlaying = false;
     state.isEnding = false;
     state.isSessionLocked = true;
     playground.classList.remove("is-playing");
     playground.classList.remove("is-ending");
-    lockScreen.setAttribute("aria-hidden", "false");
+    setOverlayActive(lockScreen, true);
     clearEndingCelebration();
     applyModeClasses();
     focusAction(lockParentAction);
@@ -2712,10 +2721,10 @@ function startSessionCore() {
   playground.classList.remove("is-parent-open");
   state.isSessionLocked = false;
   menuScreen.setAttribute("hidden", "hidden");
-  resumeScreen.setAttribute("aria-hidden", "true");
-  parentScreen.setAttribute("aria-hidden", "true");
-  lockScreen.setAttribute("aria-hidden", "true");
-  endingScreen.setAttribute("aria-hidden", "true");
+  setOverlayActive(resumeScreen, false);
+  setOverlayActive(parentScreen, false);
+  setOverlayActive(lockScreen, false);
+  setOverlayActive(endingScreen, false);
   applyModeClasses();
   startSpecialProgressLoop();
   resetGamepadCursor();
