@@ -2090,9 +2090,19 @@ function stopGamepadSpawn() {
   }
 }
 
+function resetGamepadInputState() {
+  stopGamepadSpawn();
+  gamepadState.previousButtons.primary = false;
+  gamepadState.previousButtons.menu = false;
+  gamepadState.previousDirections.left = false;
+  gamepadState.previousDirections.right = false;
+  gamepadState.previousDirections.up = false;
+  gamepadState.previousDirections.down = false;
+}
+
 function stopAllInteractiveInput() {
   releaseAllKeys();
-  stopGamepadSpawn();
+  resetGamepadInputState();
   resetPointerTrail();
   clearMenuReturnCombo();
   clearIdleNudge();
@@ -2589,13 +2599,7 @@ function pollGamepads() {
   } else if (gamepadState.connected) {
     gamepadState.connected = false;
     gamepadState.activeIndex = null;
-    stopGamepadSpawn();
-    gamepadState.previousButtons.primary = false;
-    gamepadState.previousButtons.menu = false;
-    gamepadState.previousDirections.left = false;
-    gamepadState.previousDirections.right = false;
-    gamepadState.previousDirections.up = false;
-    gamepadState.previousDirections.down = false;
+    resetGamepadInputState();
     setGamepadStatusLabel();
     updateMenuFocus();
   }
@@ -3297,9 +3301,7 @@ function handleGamepadDisconnected(event) {
   if (gamepadState.activeIndex === event.gamepad.index) {
     gamepadState.activeIndex = null;
     gamepadState.connected = false;
-    stopGamepadSpawn();
-    gamepadState.previousButtons.primary = false;
-    gamepadState.previousButtons.menu = false;
+    resetGamepadInputState();
     setGamepadStatusLabel();
     updateMenuFocus();
   }
