@@ -2042,7 +2042,7 @@ function settleViewportScene() {
 
   clearPrimeTimeouts();
   clearBursts();
-  resetPointerTrail();
+  resetPointerCoverage();
   if (state.specialEventActive) {
     endSpecialEvent();
   } else {
