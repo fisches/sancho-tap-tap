@@ -211,6 +211,12 @@ const blockedGameplayKeyCodes = new Set([
 for (let keyIndex = 1; keyIndex <= 12; keyIndex += 1) {
   blockedGameplayKeyCodes.add(`F${keyIndex}`);
 }
+const blockedKioskShortcutCodes = new Set([
+  "KeyA", "KeyD", "KeyF", "KeyH", "KeyJ", "KeyL", "KeyN", "KeyO", "KeyP",
+  "KeyR", "KeyS", "KeyT", "KeyU", "KeyW", "Digit1", "Digit2", "Digit3",
+  "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0",
+  "Minus", "Equal", "BracketLeft", "BracketRight", "Backslash", "Tab"
+]);
 const distributedPointCells = [
   [0.18, 0.2], [0.5, 0.18], [0.82, 0.2],
   [0.24, 0.48], [0.76, 0.48],
@@ -2073,6 +2079,34 @@ function isKeyboardMenuCombo(event) {
   return event.shiftKey && event.code === "KeyM";
 }
 
+function isKioskKeyboardGuardActive() {
+  return state.isPlaying ||
+    state.isPausedForFocus ||
+    state.isParentPanelOpen ||
+    state.isSessionLocked ||
+    state.pendingStart;
+}
+
+function isBlockedKioskShortcut(event) {
+  if (isKeyboardMenuCombo(event)) {
+    return false;
+  }
+
+  if (event.metaKey || event.key === "Meta" || event.key === "OS") {
+    return true;
+  }
+
+  if (event.altKey) {
+    return true;
+  }
+
+  if (event.ctrlKey) {
+    return blockedKioskShortcutCodes.has(event.code);
+  }
+
+  return false;
+}
+
 function isBlockedGameplayKey(event) {
   if (isKeyboardMenuCombo(event)) {
     return false;
@@ -2519,6 +2553,13 @@ function handleKeydown(event) {
   if (isKeyboardMenuCombo(event)) {
     event.preventDefault();
     startKeyboardMenuCombo();
+    return;
+  }
+
+  if (isKioskKeyboardGuardActive() && isBlockedKioskShortcut(event)) {
+    event.preventDefault();
+    event.stopPropagation();
+    releaseKey(event);
     return;
   }
 
