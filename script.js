@@ -280,6 +280,7 @@ let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
 let idleNudgeTimeoutId = null;
+let screenWakeLock = null;
 let lastGameplayActivityAt = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
 let pointerTapZone = "";
@@ -1682,6 +1683,35 @@ function stopAllInteractiveInput() {
   clearIdleNudge();
 }
 
+async function requestScreenWakeLock() {
+  if (!("wakeLock" in navigator) || screenWakeLock || !canInteractWithGameplay()) {
+    return;
+  }
+
+  try {
+    screenWakeLock = await navigator.wakeLock.request("screen");
+    screenWakeLock.addEventListener?.("release", () => {
+      screenWakeLock = null;
+    });
+  } catch (error) {
+    screenWakeLock = null;
+  }
+}
+
+async function releaseScreenWakeLock() {
+  if (!screenWakeLock) {
+    return;
+  }
+
+  const lock = screenWakeLock;
+  screenWakeLock = null;
+  try {
+    await lock.release();
+  } catch (error) {
+    // Some browsers auto-release on visibility changes.
+  }
+}
+
 function canInteractWithGameplay() {
   return state.isPlaying && !state.isEnding && !state.isPausedForFocus && !state.isParentPanelOpen;
 }
@@ -1714,6 +1744,7 @@ function openParentPanel() {
     return;
   }
 
+  releaseScreenWakeLock();
   stopAllInteractiveInput();
   pauseSpecialCooldown();
   endSpecialEvent();
@@ -1756,6 +1787,7 @@ function closeParentPanel() {
     startSpecialProgressLoop();
     lastGameplayActivityAt = Date.now();
     scheduleIdleNudge();
+    requestScreenWakeLock();
   }
 }
 
@@ -2263,6 +2295,7 @@ function showMenu() {
   state.interactionsSinceSpecial = 0;
   scheduleNextSpecialEvent();
   endSpecialEvent();
+  releaseScreenWakeLock();
   releaseAllKeys();
   clearPrimeTimeouts();
   clearSessionTimer();
@@ -2296,6 +2329,7 @@ function endSessionSoftly() {
   }
 
   state.isEnding = true;
+  releaseScreenWakeLock();
   endSpecialEvent();
   clearPrimeTimeouts();
   clearSessionTimer();
@@ -2378,6 +2412,7 @@ function startSessionCore() {
   scheduleIdleNudge();
   startSessionTimer();
   primeFirstView();
+  requestScreenWakeLock();
 }
 
 function handleOptionClick(event) {
@@ -2459,6 +2494,7 @@ function pauseForInterruption(title, text) {
     return;
   }
 
+  releaseScreenWakeLock();
   stopAllInteractiveInput();
   pauseSpecialCooldown();
   endSpecialEvent();
@@ -2517,6 +2553,7 @@ async function handleResumeAction() {
     startSpecialProgressLoop();
     lastGameplayActivityAt = Date.now();
     scheduleIdleNudge();
+    requestScreenWakeLock();
   }
 }
 
@@ -2581,10 +2618,16 @@ function handleGamepadDisconnected(event) {
 function handleVisibilityChange() {
   if (document.hidden) {
     pauseForInterruption("petite pause", "reviens en plein ecran pour continuer la partie.");
+    return;
+  }
+
+  if (canInteractWithGameplay()) {
+    requestScreenWakeLock();
   }
 }
 
 function handleWindowBlur() {
+  releaseScreenWakeLock();
   releaseAllKeys();
   pauseForInterruption("petite pause", "reviens en plein ecran pour continuer la partie.");
 }
