@@ -1960,6 +1960,13 @@ function handleKeydown(event) {
     return;
   }
 
+  if (state.isPausedForFocus && !resumeMenuButton.hidden && event.code === "Escape") {
+    event.preventDefault();
+    event.stopPropagation();
+    showMenu();
+    return;
+  }
+
   if (
     isBlockedGameplayKey(event) &&
     (state.isPlaying || state.isPausedForFocus || state.isParentPanelOpen || state.isSessionLocked || state.pendingStart)
