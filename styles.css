@@ -1002,7 +1002,8 @@ button {
 
 .resume-menu-button,
 .resume-button,
-.parent-action {
+.parent-action,
+.lock-action {
   border: 0;
   border-radius: 1.2rem;
   min-height: 3.3rem;
@@ -1012,10 +1013,16 @@ button {
 }
 
 .resume-button,
-.parent-action {
+.parent-action,
+.lock-action {
   background: linear-gradient(180deg, var(--accent), var(--accent-strong));
   color: #fff9f4;
   box-shadow: 0 16px 30px var(--button-shadow-soft);
+}
+
+.lock-action {
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .resume-menu-button,
@@ -1029,9 +1036,11 @@ button {
 .resume-menu-button.is-focused,
 .resume-button:focus,
 .parent-action:focus,
+.lock-action:focus,
 .resume-menu-button:focus,
 .resume-button:focus-visible,
 .parent-action:focus-visible,
+.lock-action:focus-visible,
 .resume-menu-button:focus-visible {
   outline: 0.22rem solid rgba(36, 64, 75, 0.24);
   outline-offset: 0.16rem;
