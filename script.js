@@ -599,6 +599,10 @@ function playTrailHaptic() {
   playHaptic(4, state.energyMode === "party" ? 170 : 240);
 }
 
+function playIdleNudgeHaptic() {
+  playHaptic(6, 700);
+}
+
 function playSpecialHaptic() {
   playHaptic([18, 35, 18], 650);
 }
@@ -620,6 +624,15 @@ function playFinalTimerSound() {
 
   playTone(784, 0, 0.08, 0.28, "triangle");
   playTone(659, 0.08, 0.1, 0.24, "sine");
+}
+
+function playIdleNudgeSound() {
+  if (state.soundMode === "off") {
+    return;
+  }
+
+  playTone(520, 0, 0.055, 0.18, "sine");
+  playTone(660, 0.06, 0.055, 0.14, "triangle");
 }
 
 function playSpecialSound(kind) {
@@ -1383,6 +1396,8 @@ function spawnIdleNudge() {
       spawnBurst(burst.x, burst.y, { sizeMultiplier: burst.sizeMultiplier });
     }, burst.delay);
   });
+  playIdleNudgeSound();
+  playIdleNudgeHaptic();
   idleNudgeCount += 1;
   scheduleIdleNudge();
 }
