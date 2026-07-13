@@ -1294,6 +1294,14 @@ function triggerPlayModeBursts(x, y, options = {}) {
   triggerCoverageEcho(coveragePlan?.echo);
 }
 
+function triggerTrailBurst(x, y) {
+  spawnBurst(
+    clamp(x, 34, window.innerWidth - 34),
+    clamp(y, 34, window.innerHeight - 34),
+    { sizeMultiplier: 0.78 }
+  );
+}
+
 function hideHint() {
   if (hint) {
     hint.style.transition = "opacity 180ms ease";
@@ -2278,7 +2286,7 @@ function handlePointerTrail(event) {
   hideHint();
   playTrailHaptic();
   recordGameplayActivity();
-  triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
+  triggerTrailBurst(pointX, pointY);
   maybeTriggerSpecialEvent(pointX, pointY);
 }
 
