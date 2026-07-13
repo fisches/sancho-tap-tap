@@ -1369,6 +1369,7 @@ function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu 
   state.isPausedForFocus = true;
   playground.classList.add("is-paused");
   resumeScreen.setAttribute("aria-hidden", "false");
+  focusAction(resumeButton);
 }
 
 function hideResumeScreen() {
@@ -1396,6 +1397,22 @@ function updateParentFocus() {
 
 function getParentAvailableActions() {
   return parentFocusables.filter((button) => !button.hidden);
+}
+
+function focusAction(button) {
+  if (!button) {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    if (!button.hidden) {
+      button.focus({ preventScroll: true });
+    }
+  });
+}
+
+function focusCurrentParentAction() {
+  focusAction(getParentAvailableActions()[gamepadState.parentFocusIndex]);
 }
 
 function updateParentActions() {
@@ -1546,6 +1563,7 @@ function openParentPanel() {
   playground.classList.add("is-parent-open");
   stopSpecialProgressLoop({ resetProgress: false });
   updateParentFocus();
+  focusCurrentParentAction();
 }
 
 function closeParentPanel() {
