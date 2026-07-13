@@ -983,8 +983,8 @@ function interpolateWanderPoint(points, progress) {
 
 function spawnHeroSpecial(x, y) {
   const exitLeft = Math.random() > 0.5;
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const width = getViewportWidth();
+  const height = getViewportHeight();
   const sidePadding = Math.max(width * 0.06, 56);
   const safeTop = Math.max(height * 0.16, 76);
   const safeBottom = Math.max(height - Math.max(height * 0.14, 78), safeTop + 80);
@@ -1041,8 +1041,8 @@ function spawnHeroSpecial(x, y) {
       const nextPoint = interpolateWanderPoint(wanderPoints, Math.min(progress + 0.08, 1));
       const trailX = point.x - (nextPoint.x - point.x) * 0.7;
       const trailY = point.y - (nextPoint.y - point.y) * 0.7;
-      const burstX = clamp(trailX + randomBetween(-46, 46), 40, window.innerWidth - 40);
-      const burstY = clamp(trailY + randomBetween(-42, 42), 40, window.innerHeight - 40);
+      const burstX = clamp(trailX + randomBetween(-46, 46), 40, width - 40);
+      const burstY = clamp(trailY + randomBetween(-42, 42), 40, height - 40);
       spawnBurst(burstX, burstY, { sizeMultiplier: 0.82 + Math.random() * 0.24 });
     }, 520 + index * ((heroDuration - 1400) / Math.max(burstCountForHero - 1, 1)));
   }
@@ -1099,26 +1099,28 @@ function spawnRainbowSpecial(x, y) {
 }
 
 function spawnSuperRainSpecial(x, y) {
+  const width = getViewportWidth();
+  const height = getViewportHeight();
   const overlay = createSpecialOverlay("special-super-rain", x, y);
   const cloud = document.createElement("div");
   cloud.className = "special-cloud";
-  const cloudX = clamp(x, 120, window.innerWidth - 120);
-  const cloudY = clamp(y - 120, 72, window.innerHeight * 0.32);
+  const cloudX = clamp(x, 120, width - 120);
+  const cloudY = clamp(y - 120, 72, height * 0.32);
   cloud.style.left = `${cloudX}px`;
   cloud.style.top = `${cloudY}px`;
   overlay.appendChild(cloud);
   const cloudTwo = document.createElement("div");
   cloudTwo.className = "special-cloud special-cloud-secondary";
-  cloudTwo.style.left = `${clamp(cloudX + randomBetween(-180, 180), 120, window.innerWidth - 120)}px`;
-  cloudTwo.style.top = `${clamp(cloudY + randomBetween(-20, 20), 72, window.innerHeight * 0.34)}px`;
+  cloudTwo.style.left = `${clamp(cloudX + randomBetween(-180, 180), 120, width - 120)}px`;
+  cloudTwo.style.top = `${clamp(cloudY + randomBetween(-20, 20), 72, height * 0.34)}px`;
   overlay.appendChild(cloudTwo);
   specialStage.replaceChildren(overlay);
 
   const burstCountForRain = getSpecialBurstCount(getResolvedPerformanceMode() === "normal" ? 16 : 8);
   for (let index = 0; index < burstCountForRain; index += 1) {
     scheduleSpecialTask(() => {
-      const burstX = randomBetween(window.innerWidth * 0.08, window.innerWidth * 0.92);
-      const burstY = randomBetween(28, Math.max(window.innerHeight * 0.34, 64));
+      const burstX = randomBetween(width * 0.08, width * 0.92);
+      const burstY = randomBetween(28, Math.max(height * 0.34, 64));
       spawnBurst(burstX, burstY, {
         sizeMultiplier: 1 + Math.random() * 0.36,
         variant: "rain"
