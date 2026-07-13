@@ -294,6 +294,7 @@ let idleNudgeTimeoutId = null;
 let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
 let lastGameplayActivityAt = 0;
+let idleNudgeCount = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
 let pointerTapZone = "";
 let pointerTapZoneCount = 0;
@@ -1211,7 +1212,8 @@ function triggerCoverageEcho(echoPoint) {
 
 function getIdleNudgeDelay() {
   const baseDelay = idleNudgeDelays[state.energyMode] || idleNudgeDelays.normal;
-  return getResolvedPerformanceMode() === "normal" ? baseDelay : baseDelay + 2500;
+  const performanceDelay = getResolvedPerformanceMode() === "normal" ? baseDelay : baseDelay + 2500;
+  return Math.round(performanceDelay * (1 + Math.min(idleNudgeCount, 3) * 0.45));
 }
 
 function clearIdleNudge() {
@@ -1233,6 +1235,7 @@ function spawnIdleNudge() {
     clamp(point.y + randomBetween(-22, 22), 42, window.innerHeight - 42),
     { sizeMultiplier: 0.98 }
   );
+  idleNudgeCount += 1;
   scheduleIdleNudge();
 }
 
@@ -1255,6 +1258,7 @@ function scheduleIdleNudge() {
 
 function recordGameplayActivity() {
   lastGameplayActivityAt = Date.now();
+  idleNudgeCount = 0;
   scheduleIdleNudge();
 }
 
