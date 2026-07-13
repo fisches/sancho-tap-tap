@@ -628,6 +628,11 @@ function playFinalTimerSound() {
     return;
   }
 
+  if (getResolvedPerformanceMode() === "ultra") {
+    playTone(784, 0, 0.07, 0.22, "triangle");
+    return;
+  }
+
   playTone(784, 0, 0.08, 0.28, "triangle");
   playTone(659, 0.08, 0.1, 0.24, "sine");
 }
