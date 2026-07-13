@@ -2966,6 +2966,20 @@ function handleWindowBlur() {
   pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
 }
 
+function handlePageHide() {
+  releaseScreenWakeLock();
+  stopAllInteractiveInput();
+  pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
+}
+
+function handlePageShow() {
+  syncFullscreenState();
+  updateResumeStatus();
+  if (canInteractWithGameplay()) {
+    requestScreenWakeLock();
+  }
+}
+
 function handleFullscreenChange() {
   syncFullscreenState();
   if (state.isParentPanelOpen) {
@@ -3031,6 +3045,8 @@ lockParentAction.addEventListener("click", openParentPanel);
 window.addEventListener("keydown", handleKeydown);
 window.addEventListener("keyup", releaseKey);
 window.addEventListener("blur", handleWindowBlur);
+window.addEventListener("pagehide", handlePageHide);
+window.addEventListener("pageshow", handlePageShow);
 window.addEventListener("resize", resetGamepadCursor);
 window.addEventListener("gamepadconnected", handleGamepadConnected);
 window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
