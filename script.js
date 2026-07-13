@@ -226,6 +226,10 @@ const pointerRepeatWindowMs = 2600;
 const parentHotspotConfirmMs = 1200;
 const pointerTrailMinIntervalMs = 150;
 const pointerTrailMinDistance = 52;
+const resumePriority = {
+  generic: 1,
+  fullscreen: 2
+};
 const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
@@ -365,7 +369,8 @@ const state = {
   nextSpecialAt: 0,
   specialCooldownTotalMs: 1,
   pausedSpecialCooldownRemainingMs: null,
-  interactionsSinceSpecial: 0
+  interactionsSinceSpecial: 0,
+  resumePriority: 0
 };
 const gamepadState = {
   activeIndex: null,
@@ -1659,8 +1664,9 @@ function setOverlayActive(screen, isActive) {
   screen.inert = !isActive;
 }
 
-function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu = false) {
+function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu = false, priority = resumePriority.generic) {
   setResumeContent(title, text, actionLabel, canReturnMenu);
+  state.resumePriority = priority;
   state.isPausedForFocus = true;
   playground.classList.add("is-paused");
   setOverlayActive(resumeScreen, true);
@@ -1674,6 +1680,7 @@ function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu 
 
 function hideResumeScreen() {
   state.isPausedForFocus = false;
+  state.resumePriority = 0;
   playground.classList.remove("is-paused");
   setOverlayActive(resumeScreen, false);
   resumeStatus.textContent = "";
@@ -2776,6 +2783,7 @@ function showMenu() {
   state.pendingStart = false;
   state.fullscreenWanted = false;
   state.sessionFinalCuePlayed = false;
+  state.resumePriority = 0;
   state.remainingSessionMs = null;
   state.visualMode = "normal";
   state.interactionsSinceSpecial = 0;
@@ -2879,6 +2887,7 @@ function startSessionCore() {
   state.visualMode = "normal";
   state.interactionsSinceSpecial = 0;
   state.sessionFinalCuePlayed = false;
+  state.resumePriority = 0;
   scheduleNextSpecialEvent();
   endSpecialEvent();
   applyUniverseTheme();
@@ -2982,8 +2991,16 @@ async function ensureFullscreen() {
   }
 }
 
-function pauseForInterruption(title, text, actionLabel = "reprendre") {
+function pauseForInterruption(title, text, actionLabel = "reprendre", priority = resumePriority.generic) {
   if (!state.isPlaying || state.isEnding || state.isParentPanelOpen) {
+    return;
+  }
+
+  if (state.isPausedForFocus) {
+    if (priority > state.resumePriority) {
+      setResumeContent(title, text, actionLabel);
+      state.resumePriority = priority;
+    }
     return;
   }
 
@@ -2991,7 +3008,7 @@ function pauseForInterruption(title, text, actionLabel = "reprendre") {
   pauseSpecialCooldown();
   endSpecialEvent();
   pauseSessionTimer();
-  showResumeScreen(title, text, actionLabel);
+  showResumeScreen(title, text, actionLabel, false, priority);
   releaseScreenWakeLock();
   stopSpecialProgressLoop({ resetProgress: false });
 }
@@ -3181,7 +3198,8 @@ function handleFullscreenChange() {
     pauseForInterruption(
       "plein ecran requis",
       "touche une fois pour revenir dans le jeu en plein ecran.",
-      "plein ecran"
+      "plein ecran",
+      resumePriority.fullscreen
     );
   }
 }
