@@ -2043,6 +2043,12 @@ function handlePointer(event) {
     return;
   }
 
+  if (typeof event.button === "number" && event.button !== 0) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
   event.preventDefault();
   const pointX = event.clientX;
   const pointY = event.clientY;
@@ -2052,6 +2058,19 @@ function handlePointer(event) {
   recordGameplayActivity();
   triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
   maybeTriggerSpecialEvent(pointX, pointY);
+}
+
+function handleContextMenu(event) {
+  if (
+    state.isPlaying ||
+    state.isPausedForFocus ||
+    state.isParentPanelOpen ||
+    state.isSessionLocked ||
+    state.pendingStart
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 }
 
 function nextDistributedPoint() {
@@ -2534,6 +2553,7 @@ pollGamepads();
 registerServiceWorker();
 
 playground.addEventListener("pointerdown", handlePointer, { passive: false });
+playground.addEventListener("contextmenu", handleContextMenu);
 fullscreenButton.addEventListener("click", toggleFullscreen);
 parentHotspot.addEventListener("click", openParentPanel);
 menuScreen.addEventListener("click", handleOptionClick);
