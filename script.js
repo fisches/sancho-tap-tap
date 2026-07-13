@@ -2731,6 +2731,7 @@ function handlePointer(event) {
   }
 
   event.preventDefault();
+  event.currentTarget.setPointerCapture?.(event.pointerId);
   const pointX = event.clientX;
   const pointY = event.clientY;
   activePointerTrails.set(event.pointerId, {
@@ -2788,6 +2789,9 @@ function handlePointerTrail(event) {
 }
 
 function handlePointerTrailEnd(event) {
+  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  }
   activePointerTrails.delete(event.pointerId);
 }
 
