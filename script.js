@@ -331,6 +331,7 @@ let specialProgressFrameId = null;
 let specialEventTaskIds = [];
 let visualEffectTaskIds = [];
 let idleNudgeTimeoutId = null;
+let idleHintTimeoutId = null;
 let viewportResizeSettleTimeoutId = null;
 let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
@@ -1397,6 +1398,7 @@ function spawnIdleNudge() {
     return;
   }
 
+  showIdleHint();
   getIdleNudgeBurstPlan().forEach((burst) => {
     scheduleVisualEffectTask(() => {
       spawnBurst(burst.x, burst.y, { sizeMultiplier: burst.sizeMultiplier });
@@ -1490,14 +1492,41 @@ function triggerTrailBurst(x, y) {
   );
 }
 
-function hideHint() {
+function clearIdleHint() {
+  if (idleHintTimeoutId) {
+    window.clearTimeout(idleHintTimeoutId);
+    idleHintTimeoutId = null;
+  }
+}
+
+function hideHint({ keepTimeout = false } = {}) {
+  if (!keepTimeout) {
+    clearIdleHint();
+  }
+
   if (hint) {
     hint.style.transition = "opacity 180ms ease";
     hint.style.opacity = "0";
   }
 }
 
+function showIdleHint() {
+  if (!hint || !canInteractWithGameplay()) {
+    return;
+  }
+
+  clearIdleHint();
+  hint.textContent = gamepadState.connected ? "bouton encore" : "encore";
+  hint.style.transition = "opacity 220ms ease";
+  hint.style.opacity = "0.58";
+  idleHintTimeoutId = window.setTimeout(() => {
+    idleHintTimeoutId = null;
+    hideHint({ keepTimeout: true });
+  }, 1700);
+}
+
 function resetHint() {
+  clearIdleHint();
   updateHintLabel();
   hint.style.transition = "";
   hint.style.opacity = "";
