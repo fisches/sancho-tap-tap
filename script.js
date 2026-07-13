@@ -1446,7 +1446,7 @@ function triggerPlayModeBursts(x, y, options = {}) {
     const originX = clamp(primaryX + (Math.random() * 240 - 120), 36, viewportWidth - 36);
     const originY = clamp(primaryY - 90 - Math.random() * 150, 26, Math.max(primaryY - 22, 26));
     spawnBurst(originX, originY, { sizeMultiplier: 0.92, variant: "rain" });
-    const extraBursts = Math.max(getPerformanceProfile().rainBursts, 2);
+    const extraBursts = getPerformanceProfile().rainBursts;
     for (let index = 0; index < extraBursts; index += 1) {
       const point = nextDistributedPoint();
       scheduleVisualEffectTask(() => {
