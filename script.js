@@ -1223,6 +1223,10 @@ function clearIdleNudge() {
   }
 }
 
+function resetIdleNudgeState() {
+  idleNudgeCount = 0;
+}
+
 function spawnIdleNudge() {
   if (!canInteractWithGameplay() || state.specialEventActive) {
     scheduleIdleNudge();
@@ -1258,7 +1262,7 @@ function scheduleIdleNudge() {
 
 function recordGameplayActivity() {
   lastGameplayActivityAt = Date.now();
-  idleNudgeCount = 0;
+  resetIdleNudgeState();
   scheduleIdleNudge();
 }
 
@@ -2580,6 +2584,7 @@ function showMenu() {
   clearSessionTimer();
   stopSpecialProgressLoop();
   clearIdleNudge();
+  resetIdleNudgeState();
   if (endingTimeoutId) {
     window.clearTimeout(endingTimeoutId);
     endingTimeoutId = null;
@@ -2677,6 +2682,7 @@ function startSessionCore() {
   clearEndingCelebration();
   resetPointerCoverage();
   resetHint();
+  resetIdleNudgeState();
   playground.classList.add("is-playing");
   playground.classList.remove("is-ending");
   playground.classList.remove("is-paused");
