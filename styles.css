@@ -549,6 +549,15 @@ button {
     0 12px 30px rgba(151, 87, 46, 0.12);
 }
 
+.playground.is-timer-final .session-timer {
+  background: rgba(255, 211, 188, 0.9);
+  animation: timerFinalPulse 900ms ease-in-out infinite;
+}
+
+.playground.is-ultra-light.is-timer-final .session-timer {
+  animation: none;
+}
+
 .special-progress {
   --special-progress: 0;
   position: absolute;
@@ -1552,6 +1561,17 @@ button {
   100% {
     opacity: 0;
     transform: translate(calc(-50% + var(--ending-drift, 0px)), calc(-50% - 36px)) scale(calc(0.82 * var(--ending-scale, 1))) rotate(0deg);
+  }
+}
+
+@keyframes timerFinalPulse {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+
+  50% {
+    transform: translateX(-50%) scale(1.06);
   }
 }
 

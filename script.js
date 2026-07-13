@@ -313,6 +313,7 @@ const state = {
   isParentPanelOpen: false,
   fullscreenWanted: false,
   pendingStart: false,
+  sessionFinalCuePlayed: false,
   specialEventActive: false,
   specialEventKind: "",
   lastSpecialKind: "",
@@ -1397,6 +1398,7 @@ function clearSessionTimer() {
   sessionTimer.textContent = "";
   playground.classList.remove("has-timer");
   playground.classList.remove("is-timer-low");
+  playground.classList.remove("is-timer-final");
 }
 
 function pauseSessionTimer() {
@@ -1728,12 +1730,19 @@ function updateSessionTimerLabel() {
   if (!state.sessionEndsAt) {
     sessionTimer.textContent = "";
     playground.classList.remove("is-timer-low");
+    playground.classList.remove("is-timer-final");
     return;
   }
 
   const remainingMs = state.sessionEndsAt - Date.now();
   sessionTimer.textContent = formatRemainingTime(remainingMs);
   playground.classList.toggle("is-timer-low", remainingMs <= 60000);
+  playground.classList.toggle("is-timer-final", remainingMs <= 10000);
+
+  if (remainingMs <= 10000 && !state.sessionFinalCuePlayed) {
+    state.sessionFinalCuePlayed = true;
+    playHaptic(10, 1000);
+  }
 }
 
 function clamp(value, min, max) {
@@ -2448,6 +2457,7 @@ function showMenu() {
   state.isParentPanelOpen = false;
   state.pendingStart = false;
   state.fullscreenWanted = false;
+  state.sessionFinalCuePlayed = false;
   state.remainingSessionMs = null;
   state.visualMode = "normal";
   state.interactionsSinceSpecial = 0;
@@ -2487,6 +2497,7 @@ function endSessionSoftly() {
   }
 
   state.isEnding = true;
+  state.sessionFinalCuePlayed = false;
   releaseScreenWakeLock();
   endSpecialEvent();
   clearPrimeTimeouts();
@@ -2546,6 +2557,7 @@ function startSessionCore() {
   state.isParentPanelOpen = false;
   state.visualMode = "normal";
   state.interactionsSinceSpecial = 0;
+  state.sessionFinalCuePlayed = false;
   scheduleNextSpecialEvent();
   endSpecialEvent();
   applyUniverseTheme();
