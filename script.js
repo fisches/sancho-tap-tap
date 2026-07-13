@@ -1537,6 +1537,29 @@ function handleResumeKeydown(event) {
   return false;
 }
 
+function isDirectResumeKey(event) {
+  if (!state.isPausedForFocus || state.isParentPanelOpen || state.isSessionLocked) {
+    return false;
+  }
+
+  if (event.key === "Tab" || isModifierKey(event.code) || isBlockedGameplayKey(event)) {
+    return false;
+  }
+
+  return true;
+}
+
+function handleDirectResumeKey(event) {
+  if (!isDirectResumeKey(event)) {
+    return false;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  handleResumeAction();
+  return true;
+}
+
 function handleParentKeydown(event) {
   if (!state.isParentPanelOpen) {
     return false;
@@ -2130,6 +2153,17 @@ function pollGamepads() {
 }
 
 function handlePointer(event) {
+  if (state.isPausedForFocus && !state.isParentPanelOpen && !state.isSessionLocked) {
+    if (event.target.closest(".resume-button, .resume-menu-button")) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    handleResumeAction();
+    return;
+  }
+
   if (!canInteractWithGameplay()) {
     return;
   }
@@ -2215,6 +2249,10 @@ function handleKeydown(event) {
   }
 
   if (handleResumeKeydown(event)) {
+    return;
+  }
+
+  if (handleDirectResumeKey(event)) {
     return;
   }
 
