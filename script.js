@@ -2630,6 +2630,14 @@ function handleGamepadGameplay(gamepad) {
 }
 
 function pollGamepads() {
+  if (document.hidden) {
+    if (gamepadState.spawnIntervalId || gamepadState.previousButtons.primary || gamepadState.previousButtons.menu) {
+      resetGamepadInputState();
+    }
+    animationFrameId = window.requestAnimationFrame(pollGamepads);
+    return;
+  }
+
   const gamepads = typeof navigator.getGamepads === "function" ? navigator.getGamepads() : [];
   const activeGamepad =
     (gamepadState.activeIndex !== null && gamepads[gamepadState.activeIndex]) ||
