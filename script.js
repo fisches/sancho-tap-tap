@@ -653,7 +653,9 @@ function playSpecialSound(kind) {
     parade: [392, 523, 392, 659],
     party: [523, 659, 784, 1046]
   };
-  const notes = patterns[kind] || [520, 680, 840];
+  const notes = getResolvedPerformanceMode() === "ultra"
+    ? [patterns[kind]?.[0] || 520]
+    : patterns[kind] || [520, 680, 840];
   notes.forEach((frequency, index) => {
     playTone(frequency, index * 0.075, 0.13, 0.42, index % 2 ? "triangle" : "sine");
   });
