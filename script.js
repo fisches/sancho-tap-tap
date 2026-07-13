@@ -173,6 +173,7 @@ const soundConfigs = {
   off: { volume: 0 },
   soft: { volume: 0.16 }
 };
+const defaultTimerMode = "10";
 const timerLabels = {
   5: "5 min",
   10: "10 min",
@@ -359,8 +360,9 @@ function randomBetween(min, max) {
 function loadSavedSettings() {
   try {
     const saved = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
-    if (saved.timerMode) {
-      state.timerMode = saved.timerMode;
+    const savedTimerMode = String(saved.timerMode || "");
+    if (Object.prototype.hasOwnProperty.call(timerLabels, savedTimerMode)) {
+      state.timerMode = savedTimerMode;
     }
     if (saved.universeMode && universeConfigs[saved.universeMode]) {
       state.universeMode = saved.universeMode;
@@ -650,7 +652,10 @@ function getTimerDurationMs() {
     return null;
   }
 
-  return Number.parseInt(state.timerMode, 10) * 60 * 1000;
+  const minutes = Number.parseInt(state.timerMode, 10);
+  return Number.isFinite(minutes) && minutes > 0
+    ? minutes * 60 * 1000
+    : Number.parseInt(defaultTimerMode, 10) * 60 * 1000;
 }
 
 function getUniverseThemePool() {
