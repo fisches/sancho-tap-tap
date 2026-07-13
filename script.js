@@ -2934,11 +2934,15 @@ function primeFirstView() {
     [width * 0.65, height * 0.48, 520]
   ].slice(0, profile.primeCount);
 
-  primeTimeouts = entries.map(([x, y, delay]) => window.setTimeout(() => {
-    if (state.isPlaying) {
-      triggerPlayModeBursts(x, y);
-    }
-  }, delay));
+  primeTimeouts = entries.map(([x, y, delay]) => {
+    const timeoutId = window.setTimeout(() => {
+      primeTimeouts = primeTimeouts.filter((id) => id !== timeoutId);
+      if (canInteractWithGameplay()) {
+        triggerPlayModeBursts(x, y);
+      }
+    }, delay);
+    return timeoutId;
+  });
 }
 
 function registerServiceWorker() {
