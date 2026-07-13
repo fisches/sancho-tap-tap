@@ -1598,6 +1598,13 @@ function focusCurrentParentAction() {
   focusAction(getParentAvailableActions()[gamepadState.parentFocusIndex]);
 }
 
+function setDefaultParentFocus() {
+  const availableActions = getParentAvailableActions();
+  const preferredAction = state.isSessionLocked ? parentRestartAction : parentResumeAction;
+  const preferredIndex = availableActions.indexOf(preferredAction);
+  gamepadState.parentFocusIndex = preferredIndex === -1 ? 0 : preferredIndex;
+}
+
 function focusCurrentResumeAction() {
   focusAction(getResumeAvailableActions()[gamepadState.resumeFocusIndex]);
 }
@@ -1904,8 +1911,8 @@ function openParentPanel() {
   pauseSessionTimer();
   state.isParentPanelOpen = true;
   releaseScreenWakeLock();
-  gamepadState.parentFocusIndex = 0;
   updateParentActions();
+  setDefaultParentFocus();
   updateParentSummary();
   parentScreen.setAttribute("aria-hidden", "false");
   playground.classList.add("is-parent-open");
