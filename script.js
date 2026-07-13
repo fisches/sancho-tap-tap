@@ -297,6 +297,7 @@ let idleNudgeTimeoutId = null;
 let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
 let storagePersistRequested = false;
+let sessionStartInFlight = false;
 let lastGameplayActivityAt = 0;
 let idleNudgeCount = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
@@ -2029,28 +2030,37 @@ function closeParentPanel() {
 }
 
 async function restartCurrentSession() {
+  if (sessionStartInFlight) {
+    return;
+  }
+
+  sessionStartInFlight = true;
   state.fullscreenWanted = true;
   setOverlayActive(parentScreen, false);
   playground.classList.remove("is-parent-open");
   state.isParentPanelOpen = false;
   updateParentFocus();
 
-  if (!document.fullscreenElement) {
-    const enteredFullscreen = await ensureFullscreen();
-    if (!enteredFullscreen) {
-      state.pendingStart = true;
-      showResumeScreen(
-        "plein ecran requis",
-        "touche une fois pour passer en plein ecran avant de relancer.",
-        "entrer en plein ecran",
-        true
-      );
-      return;
+  try {
+    if (!document.fullscreenElement) {
+      const enteredFullscreen = await ensureFullscreen();
+      if (!enteredFullscreen) {
+        state.pendingStart = true;
+        showResumeScreen(
+          "plein ecran requis",
+          "touche une fois pour passer en plein ecran avant de relancer.",
+          "entrer en plein ecran",
+          true
+        );
+        return;
+      }
     }
-  }
 
-  state.remainingSessionMs = getTimerDurationMs();
-  startSessionCore();
+    state.remainingSessionMs = getTimerDurationMs();
+    startSessionCore();
+  } finally {
+    sessionStartInFlight = false;
+  }
 }
 
 function isModifierKey(code) {
@@ -2855,24 +2865,34 @@ function pauseForInterruption(title, text, actionLabel = "reprendre") {
 }
 
 async function startGame() {
-  requestPersistentStorage();
-  state.fullscreenWanted = typeof document.documentElement.requestFullscreen === "function";
-  state.pendingStart = true;
-  const enteredFullscreen = await ensureFullscreen();
-
-  if (!enteredFullscreen) {
-    menuScreen.setAttribute("hidden", "hidden");
-    showResumeScreen(
-      "plein ecran requis",
-      "touche une fois pour passer en plein ecran avant de lancer la partie.",
-      "entrer en plein ecran",
-      true
-    );
+  if (sessionStartInFlight || state.isPlaying || state.pendingStart) {
     return;
   }
 
-  state.remainingSessionMs = getTimerDurationMs();
-  startSessionCore();
+  sessionStartInFlight = true;
+  requestPersistentStorage();
+  state.fullscreenWanted = typeof document.documentElement.requestFullscreen === "function";
+  state.pendingStart = true;
+
+  try {
+    const enteredFullscreen = await ensureFullscreen();
+
+    if (!enteredFullscreen) {
+      menuScreen.setAttribute("hidden", "hidden");
+      showResumeScreen(
+        "plein ecran requis",
+        "touche une fois pour passer en plein ecran avant de lancer la partie.",
+        "entrer en plein ecran",
+        true
+      );
+      return;
+    }
+
+    state.remainingSessionMs = getTimerDurationMs();
+    startSessionCore();
+  } finally {
+    sessionStartInFlight = false;
+  }
 }
 
 async function handleResumeAction() {
