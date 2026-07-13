@@ -706,9 +706,14 @@ function updateSpecialProgress() {
     0,
     1
   );
-  const progress = state.specialEventActive || !canInteractWithGameplay()
+  const canInteract = canInteractWithGameplay();
+  const progress = state.specialEventActive || !canInteract
     ? 0
     : Math.min(timeProgress, interactionProgress);
+  specialProgress.classList.toggle(
+    "is-awaiting-input",
+    canInteract && !state.specialEventActive && timeProgress >= 1 && interactionProgress < 1
+  );
   specialProgress.style.setProperty("--special-progress", progress.toFixed(3));
 }
 
