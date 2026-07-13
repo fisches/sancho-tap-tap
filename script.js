@@ -611,6 +611,10 @@ function playTrailHaptic() {
 }
 
 function playIdleNudgeHaptic() {
+  if (getResolvedPerformanceMode() === "ultra") {
+    return;
+  }
+
   playHaptic(6, 700);
 }
 
