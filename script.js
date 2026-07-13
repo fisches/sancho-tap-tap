@@ -293,9 +293,7 @@ let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.le
 let pointerTapZone = "";
 let pointerTapZoneCount = 0;
 let lastPointerTapAt = 0;
-let activeTrailPointerId = null;
-let lastTrailBurstAt = 0;
-let lastTrailPoint = null;
+const activePointerTrails = new Map();
 let audioContext = null;
 let lastTapSoundAt = 0;
 let lastHapticAt = 0;
@@ -1317,9 +1315,7 @@ function resetPointerCoverage() {
 }
 
 function resetPointerTrail() {
-  activeTrailPointerId = null;
-  lastTrailBurstAt = 0;
-  lastTrailPoint = null;
+  activePointerTrails.clear();
 }
 
 function clearEndingCelebration() {
@@ -2234,9 +2230,10 @@ function handlePointer(event) {
   event.preventDefault();
   const pointX = event.clientX;
   const pointY = event.clientY;
-  activeTrailPointerId = event.pointerId;
-  lastTrailBurstAt = Date.now();
-  lastTrailPoint = { x: pointX, y: pointY };
+  activePointerTrails.set(event.pointerId, {
+    lastBurstAt: Date.now(),
+    point: { x: pointX, y: pointY }
+  });
 
   hideHint();
   playTapSound();
@@ -2247,7 +2244,12 @@ function handlePointer(event) {
 }
 
 function handlePointerTrail(event) {
-  if (event.pointerId !== activeTrailPointerId || !canInteractWithGameplay()) {
+  const trail = activePointerTrails.get(event.pointerId);
+  if (!trail) {
+    return;
+  }
+
+  if (!canInteractWithGameplay()) {
     resetPointerTrail();
     return;
   }
@@ -2260,16 +2262,14 @@ function handlePointerTrail(event) {
   const now = Date.now();
   const pointX = event.clientX;
   const pointY = event.clientY;
-  const distance = lastTrailPoint
-    ? Math.hypot(pointX - lastTrailPoint.x, pointY - lastTrailPoint.y)
-    : pointerTrailMinDistance;
+  const distance = Math.hypot(pointX - trail.point.x, pointY - trail.point.y);
 
-  if (now - lastTrailBurstAt < pointerTrailMinIntervalMs || distance < pointerTrailMinDistance) {
+  if (now - trail.lastBurstAt < pointerTrailMinIntervalMs || distance < pointerTrailMinDistance) {
     return;
   }
 
-  lastTrailBurstAt = now;
-  lastTrailPoint = { x: pointX, y: pointY };
+  trail.lastBurstAt = now;
+  trail.point = { x: pointX, y: pointY };
   hideHint();
   playTapHaptic();
   recordGameplayActivity();
@@ -2278,9 +2278,7 @@ function handlePointerTrail(event) {
 }
 
 function handlePointerTrailEnd(event) {
-  if (event.pointerId === activeTrailPointerId) {
-    resetPointerTrail();
-  }
+  activePointerTrails.delete(event.pointerId);
 }
 
 function handleContextMenu(event) {
