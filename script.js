@@ -2056,7 +2056,9 @@ function updateSessionTimerLabel() {
   if (remainingMs <= 10000 && !state.sessionFinalCuePlayed) {
     state.sessionFinalCuePlayed = true;
     playFinalTimerSound();
-    playHaptic(10, 1000, { force: true });
+    if (getResolvedPerformanceMode() !== "ultra") {
+      playHaptic(10, 1000, { force: true });
+    }
   }
 }
 
