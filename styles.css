@@ -1030,6 +1030,11 @@ button {
   margin-top: 1rem;
 }
 
+.lock-action.is-armed {
+  background: linear-gradient(180deg, #ffb86b, #f28b44);
+  color: #3b2c1f;
+}
+
 .resume-menu-button,
 .parent-action-soft {
   background: var(--ui-glass-strong);

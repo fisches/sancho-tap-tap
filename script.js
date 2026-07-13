@@ -319,6 +319,8 @@ let menuComboTimeoutId = null;
 let menuComboSource = null;
 let parentHotspotTimeoutId = null;
 let parentHotspotArmed = false;
+let lockParentActionTimeoutId = null;
+let lockParentActionArmed = false;
 let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
@@ -1552,6 +1554,17 @@ function resetParentHotspotArm() {
   parentHotspot.textContent = "parent";
 }
 
+function resetLockParentActionArm() {
+  if (lockParentActionTimeoutId) {
+    window.clearTimeout(lockParentActionTimeoutId);
+    lockParentActionTimeoutId = null;
+  }
+
+  lockParentActionArmed = false;
+  lockParentAction.classList.remove("is-armed");
+  lockParentAction.textContent = "options parent";
+}
+
 function shouldConfirmParentHotspot() {
   return state.isPlaying && !state.isEnding && !state.isParentPanelOpen && !state.isSessionLocked;
 }
@@ -1576,6 +1589,22 @@ function handleParentHotspotClick(event) {
   parentHotspot.classList.add("is-armed");
   parentHotspot.textContent = "encore";
   parentHotspotTimeoutId = window.setTimeout(resetParentHotspotArm, parentHotspotConfirmMs);
+}
+
+function handleLockParentAction(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (lockParentActionArmed) {
+    resetLockParentActionArm();
+    openParentPanel();
+    return;
+  }
+
+  lockParentActionArmed = true;
+  lockParentAction.classList.add("is-armed");
+  lockParentAction.textContent = "encore";
+  lockParentActionTimeoutId = window.setTimeout(resetLockParentActionArm, parentHotspotConfirmMs);
 }
 
 function syncFullscreenState() {
@@ -2030,6 +2059,7 @@ function openParentPanel() {
   }
 
   resetParentHotspotArm();
+  resetLockParentActionArm();
   stopAllInteractiveInput();
   pauseSpecialCooldown();
   endSpecialEvent();
@@ -2727,6 +2757,7 @@ function syncOptionButtons() {
 
 function showMenu() {
   resetParentHotspotArm();
+  resetLockParentActionArm();
   state.isPlaying = false;
   state.isEnding = false;
   state.isSessionLocked = false;
@@ -2829,6 +2860,7 @@ function startSessionTimer() {
 
 function startSessionCore() {
   resetParentHotspotArm();
+  resetLockParentActionArm();
   state.isPlaying = true;
   state.isEnding = false;
   state.pendingStart = false;
@@ -3184,7 +3216,7 @@ parentResumeAction.addEventListener("click", closeParentPanel);
 parentRestartAction.addEventListener("click", restartCurrentSession);
 parentMenuAction.addEventListener("click", showMenu);
 parentExitAction.addEventListener("click", exitFullscreenToMenu);
-lockParentAction.addEventListener("click", openParentPanel);
+lockParentAction.addEventListener("click", handleLockParentAction);
 window.addEventListener("keydown", handleKeydown);
 window.addEventListener("keyup", releaseKey);
 window.addEventListener("blur", handleWindowBlur);
