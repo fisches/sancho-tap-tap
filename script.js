@@ -215,6 +215,8 @@ const distributedPointCells = [
 ];
 const pointerRepeatWindowMs = 2600;
 const parentHotspotConfirmMs = 1200;
+const pointerTrailMinIntervalMs = 150;
+const pointerTrailMinDistance = 52;
 const emojiAssetBaseUrl = "./assets/twemoji";
 const lowPowerMode =
   (typeof navigator.hardwareConcurrency === "number" && navigator.hardwareConcurrency <= 4) ||
@@ -291,6 +293,9 @@ let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.le
 let pointerTapZone = "";
 let pointerTapZoneCount = 0;
 let lastPointerTapAt = 0;
+let activeTrailPointerId = null;
+let lastTrailBurstAt = 0;
+let lastTrailPoint = null;
 let audioContext = null;
 let lastTapSoundAt = 0;
 let lastHapticAt = 0;
@@ -1308,6 +1313,13 @@ function resetPointerCoverage() {
   pointerTapZone = "";
   pointerTapZoneCount = 0;
   lastPointerTapAt = 0;
+  resetPointerTrail();
+}
+
+function resetPointerTrail() {
+  activeTrailPointerId = null;
+  lastTrailBurstAt = 0;
+  lastTrailPoint = null;
 }
 
 function clearEndingCelebration() {
@@ -2222,6 +2234,9 @@ function handlePointer(event) {
   event.preventDefault();
   const pointX = event.clientX;
   const pointY = event.clientY;
+  activeTrailPointerId = event.pointerId;
+  lastTrailBurstAt = Date.now();
+  lastTrailPoint = { x: pointX, y: pointY };
 
   hideHint();
   playTapSound();
@@ -2229,6 +2244,43 @@ function handlePointer(event) {
   recordGameplayActivity();
   triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
   maybeTriggerSpecialEvent(pointX, pointY);
+}
+
+function handlePointerTrail(event) {
+  if (event.pointerId !== activeTrailPointerId || !canInteractWithGameplay()) {
+    resetPointerTrail();
+    return;
+  }
+
+  if (event.target === fullscreenButton || event.target === parentHotspot) {
+    return;
+  }
+
+  event.preventDefault();
+  const now = Date.now();
+  const pointX = event.clientX;
+  const pointY = event.clientY;
+  const distance = lastTrailPoint
+    ? Math.hypot(pointX - lastTrailPoint.x, pointY - lastTrailPoint.y)
+    : pointerTrailMinDistance;
+
+  if (now - lastTrailBurstAt < pointerTrailMinIntervalMs || distance < pointerTrailMinDistance) {
+    return;
+  }
+
+  lastTrailBurstAt = now;
+  lastTrailPoint = { x: pointX, y: pointY };
+  hideHint();
+  playTapHaptic();
+  recordGameplayActivity();
+  triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
+  maybeTriggerSpecialEvent(pointX, pointY);
+}
+
+function handlePointerTrailEnd(event) {
+  if (event.pointerId === activeTrailPointerId) {
+    resetPointerTrail();
+  }
 }
 
 function handleContextMenu(event) {
@@ -2763,6 +2815,10 @@ pollGamepads();
 registerServiceWorker();
 
 playground.addEventListener("pointerdown", handlePointer, { passive: false });
+playground.addEventListener("pointermove", handlePointerTrail, { passive: false });
+playground.addEventListener("pointerup", handlePointerTrailEnd);
+playground.addEventListener("pointercancel", handlePointerTrailEnd);
+playground.addEventListener("lostpointercapture", handlePointerTrailEnd);
 playground.addEventListener("contextmenu", handleContextMenu);
 fullscreenButton.addEventListener("click", toggleFullscreen);
 parentHotspot.addEventListener("click", handleParentHotspotClick);
