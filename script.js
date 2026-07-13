@@ -506,6 +506,10 @@ function playTapHaptic() {
   playHaptic(8, state.energyMode === "party" ? 95 : 140);
 }
 
+function playTrailHaptic() {
+  playHaptic(4, state.energyMode === "party" ? 170 : 240);
+}
+
 function playSpecialHaptic() {
   playHaptic([18, 35, 18], 650);
 }
@@ -2271,7 +2275,7 @@ function handlePointerTrail(event) {
   trail.lastBurstAt = now;
   trail.point = { x: pointX, y: pointY };
   hideHint();
-  playTapHaptic();
+  playTrailHaptic();
   recordGameplayActivity();
   triggerPlayModeBursts(pointX, pointY, { source: "pointer" });
   maybeTriggerSpecialEvent(pointX, pointY);
