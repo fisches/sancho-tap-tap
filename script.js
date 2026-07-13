@@ -1713,6 +1713,7 @@ function handleParentKeydown(event) {
 
 function updateParentActions() {
   parentResumeAction.hidden = state.isSessionLocked;
+  parentExitAction.hidden = !document.fullscreenElement;
   parentTitle.textContent = state.isSessionLocked ? "partie terminee" : "sortie protegee";
   parentText.textContent = state.isSessionLocked
     ? "relance une partie ou retourne au menu."
@@ -2894,6 +2895,10 @@ function handleWindowBlur() {
 
 function handleFullscreenChange() {
   syncFullscreenState();
+  if (state.isParentPanelOpen) {
+    updateParentActions();
+    updateParentFocus();
+  }
 
   if (!state.fullscreenWanted || !state.isPlaying || state.isEnding || state.isParentPanelOpen) {
     return;
