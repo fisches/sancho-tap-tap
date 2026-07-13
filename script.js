@@ -193,8 +193,8 @@ const energyLabels = {
   party: "fete"
 };
 const soundLabels = {
-  off: "silence",
-  soft: "doux"
+  off: "silence total",
+  soft: "son doux"
 };
 const idleNudgeDelays = {
   gentle: 11000,
