@@ -206,7 +206,10 @@ const blockedGameplayKeyCodes = new Set([
   "ContextMenu", "Escape", "PrintScreen", "ScrollLock", "Pause",
   "CapsLock", "NumLock", "ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft",
   "PageUp", "PageDown", "Home", "End", "Insert", "Delete",
-  "BrowserBack", "BrowserForward", "BrowserRefresh", "BrowserHome"
+  "BrowserBack", "BrowserForward", "BrowserRefresh", "BrowserHome",
+  "AudioVolumeMute", "AudioVolumeDown", "AudioVolumeUp",
+  "MediaPlayPause", "MediaStop", "MediaTrackPrevious", "MediaTrackNext",
+  "BrightnessDown", "BrightnessUp"
 ]);
 for (let keyIndex = 1; keyIndex <= 12; keyIndex += 1) {
   blockedGameplayKeyCodes.add(`F${keyIndex}`);
