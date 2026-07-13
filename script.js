@@ -2168,6 +2168,7 @@ function resetGamepadInputState() {
 }
 
 function stopAllInteractiveInput() {
+  cancelHaptics();
   releaseAllKeys();
   resetGamepadInputState();
   resetPointerTrail();
