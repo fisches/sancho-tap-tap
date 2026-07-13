@@ -513,6 +513,17 @@ function ensureAudioContext() {
   return audioContext;
 }
 
+function primeAudioContext() {
+  const context = ensureAudioContext();
+  if (!context) {
+    return;
+  }
+
+  if (context.state === "suspended") {
+    context.resume().catch(() => {});
+  }
+}
+
 function playTone(frequency, startDelay, duration, gain = 1, type = "sine") {
   const context = ensureAudioContext();
   if (!context) {
@@ -2960,6 +2971,7 @@ function handleOptionClick(event) {
   if (group === "sound" && soundConfigs[value]) {
     state.soundMode = value;
     if (value === "soft") {
+      primeAudioContext();
       playTone(660, 0, 0.09, 0.35, "sine");
       playTone(880, 0.07, 0.1, 0.28, "triangle");
     }
@@ -3041,6 +3053,7 @@ async function startGame() {
 
   sessionStartInFlight = true;
   requestPersistentStorage();
+  primeAudioContext();
   state.fullscreenWanted = typeof document.documentElement.requestFullscreen === "function";
   state.pendingStart = true;
 
@@ -3071,6 +3084,7 @@ async function handleResumeAction() {
   }
 
   sessionStartInFlight = true;
+  primeAudioContext();
   try {
     if (state.fullscreenWanted && !document.fullscreenElement) {
       const enteredFullscreen = await ensureFullscreen();
