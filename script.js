@@ -524,6 +524,12 @@ function primeAudioContext() {
   }
 }
 
+function suspendAudioContext() {
+  if (audioContext?.state === "running") {
+    audioContext.suspend().catch(() => {});
+  }
+}
+
 function playTone(frequency, startDelay, duration, gain = 1, type = "sine") {
   const context = ensureAudioContext();
   if (!context) {
@@ -2974,6 +2980,8 @@ function handleOptionClick(event) {
       primeAudioContext();
       playTone(660, 0, 0.09, 0.35, "sine");
       playTone(880, 0.07, 0.1, 0.28, "triangle");
+    } else {
+      suspendAudioContext();
     }
   }
 
@@ -3235,12 +3243,14 @@ function handleVisibilityChange() {
 
 function handleWindowBlur() {
   releaseScreenWakeLock();
+  suspendAudioContext();
   releaseAllKeys();
   pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
 }
 
 function handlePageHide() {
   releaseScreenWakeLock();
+  suspendAudioContext();
   stopAllInteractiveInput();
   pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
 }
