@@ -327,7 +327,8 @@ const gamepadState = {
     up: false,
     down: false
   },
-  parentFocusIndex: 0
+  parentFocusIndex: 0,
+  resumeFocusIndex: 0
 };
 const menuGrid = [
   [0, 1, 2, 3],
@@ -1362,6 +1363,10 @@ function setResumeContent(title, text, actionLabel = "reprendre", canReturnMenu 
   resumeText.textContent = text;
   resumeButton.textContent = actionLabel;
   resumeMenuButton.hidden = !canReturnMenu;
+  if (gamepadState.resumeFocusIndex >= getResumeAvailableActions().length) {
+    gamepadState.resumeFocusIndex = 0;
+  }
+  updateResumeFocus();
 }
 
 function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu = false) {
@@ -1369,13 +1374,38 @@ function showResumeScreen(title, text, actionLabel = "reprendre", canReturnMenu 
   state.isPausedForFocus = true;
   playground.classList.add("is-paused");
   resumeScreen.setAttribute("aria-hidden", "false");
-  focusAction(resumeButton);
+  gamepadState.resumeFocusIndex = 0;
+  gamepadState.previousButtons.primary = false;
+  gamepadState.previousDirections.left = false;
+  gamepadState.previousDirections.right = false;
+  updateResumeFocus();
+  focusCurrentResumeAction();
 }
 
 function hideResumeScreen() {
   state.isPausedForFocus = false;
   playground.classList.remove("is-paused");
   resumeScreen.setAttribute("aria-hidden", "true");
+  updateResumeFocus();
+}
+
+function getResumeAvailableActions() {
+  return [resumeButton, resumeMenuButton].filter((button) => !button.hidden);
+}
+
+function updateResumeFocus() {
+  const availableActions = getResumeAvailableActions();
+  if (gamepadState.resumeFocusIndex >= availableActions.length) {
+    gamepadState.resumeFocusIndex = 0;
+  }
+  [resumeButton, resumeMenuButton].forEach((button) => {
+    button.classList.toggle(
+      "is-focused",
+      state.isPausedForFocus &&
+        gamepadState.connected &&
+        availableActions[gamepadState.resumeFocusIndex] === button
+    );
+  });
 }
 
 function updateParentFocus() {
@@ -1413,6 +1443,10 @@ function focusAction(button) {
 
 function focusCurrentParentAction() {
   focusAction(getParentAvailableActions()[gamepadState.parentFocusIndex]);
+}
+
+function focusCurrentResumeAction() {
+  focusAction(getResumeAvailableActions()[gamepadState.resumeFocusIndex]);
 }
 
 function updateParentActions() {
@@ -1492,6 +1526,8 @@ function clamp(value, min, max) {
 function setGamepadStatusLabel() {
   gamepadStatus.textContent = gamepadState.connected ? "manette connectee" : "manette inactive";
   playground.classList.toggle("has-gamepad", gamepadState.connected);
+  updateResumeFocus();
+  updateParentFocus();
 }
 
 function updateGamepadCursor() {
@@ -1811,9 +1847,25 @@ function handleGamepadParentPanel(gamepad, horizontal, primaryPressed) {
   }
 }
 
-function handleGamepadResumeOverlay(primaryPressed) {
+function handleGamepadResumeOverlay(horizontal, primaryPressed) {
+  const availableActions = getResumeAvailableActions();
+  const movingLeft = horizontal < -gamepadConfig.deadzone;
+  const movingRight = horizontal > gamepadConfig.deadzone;
+  const horizontalPressed = movingLeft || movingRight;
+
+  if (availableActions.length > 1 && horizontalPressed && !gamepadState.previousDirections.left && !gamepadState.previousDirections.right) {
+    const delta = movingLeft ? -1 : 1;
+    gamepadState.resumeFocusIndex =
+      (gamepadState.resumeFocusIndex + delta + availableActions.length) % availableActions.length;
+    updateResumeFocus();
+    focusCurrentResumeAction();
+  }
+
+  gamepadState.previousDirections.left = movingLeft;
+  gamepadState.previousDirections.right = movingRight;
+
   if (primaryPressed && !gamepadState.previousButtons.primary) {
-    resumeButton.click();
+    getResumeAvailableActions()[gamepadState.resumeFocusIndex]?.click();
   }
 }
 
@@ -1865,7 +1917,7 @@ function pollGamepads() {
       handleGamepadParentPanel(activeGamepad, menuHorizontal, primaryPressed);
       gamepadState.previousButtons.primary = primaryPressed;
     } else if (state.isPausedForFocus) {
-      handleGamepadResumeOverlay(primaryPressed);
+      handleGamepadResumeOverlay(menuHorizontal, primaryPressed);
       gamepadState.previousButtons.primary = primaryPressed;
     } else if (state.isPlaying) {
       handleGamepadGameplay(activeGamepad);

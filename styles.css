@@ -994,7 +994,13 @@ button {
 
 .resume-button.is-focused,
 .parent-action.is-focused,
-.resume-menu-button.is-focused {
+.resume-menu-button.is-focused,
+.resume-button:focus,
+.parent-action:focus,
+.resume-menu-button:focus,
+.resume-button:focus-visible,
+.parent-action:focus-visible,
+.resume-menu-button:focus-visible {
   outline: 0.22rem solid rgba(36, 64, 75, 0.24);
   outline-offset: 0.16rem;
 }
