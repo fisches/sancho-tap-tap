@@ -54,6 +54,7 @@ button {
   overflow: hidden;
   isolation: isolate;
   cursor: pointer;
+  touch-action: none;
   background:
     radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.75), transparent 22%),
     radial-gradient(circle at 85% 18%, rgba(255, 255, 255, 0.55), transparent 18%),

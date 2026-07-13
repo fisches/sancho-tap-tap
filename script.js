@@ -2816,6 +2816,8 @@ playground.addEventListener("pointerdown", handlePointer, { passive: false });
 playground.addEventListener("pointermove", handlePointerTrail, { passive: false });
 playground.addEventListener("pointerup", handlePointerTrailEnd);
 playground.addEventListener("pointercancel", handlePointerTrailEnd);
+playground.addEventListener("pointerleave", handlePointerTrailEnd);
+playground.addEventListener("pointerout", handlePointerTrailEnd);
 playground.addEventListener("lostpointercapture", handlePointerTrailEnd);
 playground.addEventListener("contextmenu", handleContextMenu);
 fullscreenButton.addEventListener("click", toggleFullscreen);
