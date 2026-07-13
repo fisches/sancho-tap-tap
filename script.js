@@ -1972,6 +1972,16 @@ function resetGamepadCursor() {
   updateGamepadCursor();
 }
 
+function syncViewportSize() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", `${Math.max(viewportHeight, 1).toFixed(2)}px`);
+}
+
+function handleViewportResize() {
+  syncViewportSize();
+  resetGamepadCursor();
+}
+
 function stopGamepadSpawn() {
   if (gamepadState.spawnIntervalId) {
     window.clearInterval(gamepadState.spawnIntervalId);
@@ -3187,6 +3197,7 @@ function handleReducedMotionChange() {
 }
 
 loadSavedSettings();
+syncViewportSize();
 applyUniverseTheme();
 applyModeClasses();
 syncOptionButtons();
@@ -3222,9 +3233,11 @@ window.addEventListener("keyup", releaseKey);
 window.addEventListener("blur", handleWindowBlur);
 window.addEventListener("pagehide", handlePageHide);
 window.addEventListener("pageshow", handlePageShow);
-window.addEventListener("resize", resetGamepadCursor);
+window.addEventListener("resize", handleViewportResize);
 window.addEventListener("gamepadconnected", handleGamepadConnected);
 window.addEventListener("gamepaddisconnected", handleGamepadDisconnected);
+window.visualViewport?.addEventListener?.("resize", handleViewportResize);
+window.visualViewport?.addEventListener?.("scroll", syncViewportSize);
 document.addEventListener("visibilitychange", handleVisibilityChange);
 document.addEventListener("fullscreenchange", handleFullscreenChange);
 document.addEventListener("dragstart", handleKioskNativeGesture);
