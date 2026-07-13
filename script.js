@@ -330,6 +330,7 @@ let specialProgressFrameId = null;
 let specialEventTaskIds = [];
 let visualEffectTaskIds = [];
 let idleNudgeTimeoutId = null;
+let viewportResizeSettleTimeoutId = null;
 let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
 let storagePersistRequested = false;
@@ -2023,9 +2024,33 @@ function syncViewportSize() {
   document.documentElement.style.setProperty("--app-height", `${Math.max(viewportHeight, 1).toFixed(2)}px`);
 }
 
+function settleViewportScene() {
+  viewportResizeSettleTimeoutId = null;
+  if (!state.isPlaying || state.isEnding || state.isPausedForFocus || state.isParentPanelOpen) {
+    return;
+  }
+
+  clearPrimeTimeouts();
+  clearBursts();
+  resetPointerTrail();
+  if (state.specialEventActive) {
+    endSpecialEvent();
+  } else {
+    updateSpecialProgress();
+  }
+}
+
 function handleViewportResize() {
   syncViewportSize();
   resetGamepadCursor();
+  if (viewportResizeSettleTimeoutId) {
+    window.clearTimeout(viewportResizeSettleTimeoutId);
+    viewportResizeSettleTimeoutId = null;
+  }
+  if (!state.isPlaying || state.isEnding) {
+    return;
+  }
+  viewportResizeSettleTimeoutId = window.setTimeout(settleViewportScene, 180);
 }
 
 function stopGamepadSpawn() {
