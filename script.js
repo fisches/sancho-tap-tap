@@ -1325,6 +1325,7 @@ function hideHint() {
 }
 
 function resetHint() {
+  updateHintLabel();
   hint.style.transition = "";
   hint.style.opacity = "";
 }
@@ -1813,8 +1814,13 @@ function clamp(value, min, max) {
 function setGamepadStatusLabel() {
   gamepadStatus.textContent = gamepadState.connected ? "manette connectee" : "manette inactive";
   playground.classList.toggle("has-gamepad", gamepadState.connected);
+  updateHintLabel();
   updateResumeFocus();
   updateParentFocus();
+}
+
+function updateHintLabel() {
+  hint.textContent = gamepadState.connected ? "bouton pour jouer" : "touche pour jouer";
 }
 
 function updateGamepadCursor() {
