@@ -1217,6 +1217,16 @@ button {
   z-index: 1;
 }
 
+.special-hero-animal {
+  animation-name: specialAnimalWander;
+  border-radius: 38% 48% 42% 52%;
+  border-color: rgba(78, 117, 84, 0.22);
+  box-shadow:
+    0 1.1rem 2rem rgba(36, 64, 75, 0.2),
+    0 0 0 0.24rem rgba(255, 255, 255, 0.82),
+    0 0.35rem 0 0 rgba(120, 168, 112, 0.18);
+}
+
 .special-hero-print {
   width: clamp(1.4rem, 3.6vmin, 2.25rem);
   height: clamp(1.4rem, 3.6vmin, 2.25rem);
@@ -1224,6 +1234,12 @@ button {
   animation: specialHeroPrint 1.9s ease-out forwards;
   filter: drop-shadow(0 0.45rem 0.85rem rgba(36, 64, 75, 0.16));
   z-index: 0;
+}
+
+.special-hero-paw-print {
+  width: clamp(1.15rem, 3.2vmin, 1.9rem);
+  height: clamp(1.15rem, 3.2vmin, 1.9rem);
+  filter: drop-shadow(0 0.35rem 0.65rem rgba(78, 117, 84, 0.18));
 }
 
 .special-rainbow-ribbon {
@@ -1518,6 +1534,45 @@ button {
   100% {
     opacity: 0;
     transform: translate(var(--wander-end-x), var(--wander-end-y)) translate(-50%, -68%) scale(calc(0.92 * var(--burst-scale, 1))) rotate(0deg);
+  }
+}
+
+@keyframes specialAnimalWander {
+  0% {
+    opacity: 0;
+    transform: translate(var(--wander-start-x), var(--wander-start-y)) translate(-50%, -52%) scale(calc(0.74 * var(--burst-scale, 1))) rotate(-10deg);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(var(--wander-start-x), var(--wander-start-y)) translate(-50%, -64%) scale(calc(1.02 * var(--burst-scale, 1))) rotate(4deg);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(var(--wander-mid1-x), var(--wander-mid1-y)) translate(-50%, -54%) scale(calc(0.98 * var(--burst-scale, 1))) rotate(-7deg);
+  }
+  36% {
+    opacity: 1;
+    transform: translate(var(--wander-mid1-x), var(--wander-mid1-y)) translate(-50%, -66%) scale(calc(1.04 * var(--burst-scale, 1))) rotate(8deg);
+  }
+  52% {
+    opacity: 1;
+    transform: translate(var(--wander-mid2-x), var(--wander-mid2-y)) translate(-50%, -56%) scale(calc(1.02 * var(--burst-scale, 1))) rotate(-9deg);
+  }
+  66% {
+    opacity: 1;
+    transform: translate(var(--wander-mid3-x), var(--wander-mid3-y)) translate(-50%, -68%) scale(calc(1.05 * var(--burst-scale, 1))) rotate(9deg);
+  }
+  82% {
+    opacity: 1;
+    transform: translate(var(--wander-mid3-x), var(--wander-mid3-y)) translate(-50%, -56%) scale(calc(1 * var(--burst-scale, 1))) rotate(-5deg);
+  }
+  94% {
+    opacity: 1;
+    transform: translate(var(--wander-end-x), var(--wander-end-y)) translate(-50%, -64%) scale(calc(0.98 * var(--burst-scale, 1))) rotate(5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--wander-end-x), var(--wander-end-y)) translate(-50%, -74%) scale(calc(0.86 * var(--burst-scale, 1))) rotate(0deg);
   }
 }
 

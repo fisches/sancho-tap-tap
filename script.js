@@ -892,6 +892,9 @@ function createSpecialEmojiNode(x, y, emojiChar, className, scale = 1) {
 function createHeroPrintNode(x, y, emojiChar, delay, scale = 1) {
   const print = createEmoji(x, y, emojiChar, "main");
   print.classList.add("special-hero-print");
+  if (emojiChar === "🐾") {
+    print.classList.add("special-hero-paw-print");
+  }
   print.style.animationDuration = "";
   print.style.animationDelay = `${delay}ms`;
   print.style.setProperty("--burst-scale", scale.toFixed(2));
@@ -912,6 +915,9 @@ function getHeroEmojiPool() {
 }
 
 function getHeroPrintEmoji() {
+  if (state.universeMode === "animals") {
+    return "🐾";
+  }
   if (state.universeMode === "vehicles") {
     return "💨";
   }
@@ -977,6 +983,9 @@ function spawnHeroSpecial(x, y) {
   const heroScale = width < 520 ? 1.72 : 2.65;
   const printScaleBase = width < 520 ? 0.34 : 0.42;
   const heroEmoji = createSpecialEmojiNode(0, 0, pickRandom(getHeroEmojiPool()), "special-hero-emoji", heroScale);
+  if (state.universeMode === "animals") {
+    heroEmoji.classList.add("special-hero-animal");
+  }
   setWanderPath(heroEmoji, startX, startY, mid1X, mid1Y, mid2X, mid2Y, mid3X, mid3Y, endX, endY);
 
   overlay.appendChild(heroEmoji);
