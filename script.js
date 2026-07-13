@@ -290,6 +290,7 @@ let parentHotspotArmed = false;
 let specialEventTimeoutId = null;
 let specialProgressFrameId = null;
 let specialEventTaskIds = [];
+let visualEffectTaskIds = [];
 let idleNudgeTimeoutId = null;
 let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
@@ -752,6 +753,22 @@ function scheduleSpecialTask(callback, delay) {
   specialEventTaskIds.push(taskId);
 }
 
+function clearVisualEffectTasks() {
+  visualEffectTaskIds.forEach((taskId) => window.clearTimeout(taskId));
+  visualEffectTaskIds = [];
+}
+
+function scheduleVisualEffectTask(callback, delay) {
+  const taskId = window.setTimeout(() => {
+    visualEffectTaskIds = visualEffectTaskIds.filter((id) => id !== taskId);
+    if (!canInteractWithGameplay()) {
+      return;
+    }
+    callback();
+  }, delay);
+  visualEffectTaskIds.push(taskId);
+}
+
 function pruneBurstsIfNeeded() {
   while (burstCount >= getPerformanceProfile().maxBursts && emojiStage.firstChild) {
     emojiStage.removeChild(emojiStage.firstChild);
@@ -1203,10 +1220,8 @@ function triggerCoverageEcho(echoPoint) {
     return;
   }
 
-  window.setTimeout(() => {
-    if (canInteractWithGameplay()) {
-      spawnBurst(echoPoint.x, echoPoint.y, { sizeMultiplier: 0.86 });
-    }
+  scheduleVisualEffectTask(() => {
+    spawnBurst(echoPoint.x, echoPoint.y, { sizeMultiplier: 0.86 });
   }, echoPoint.delay);
 }
 
@@ -1280,17 +1295,15 @@ function triggerPlayModeBursts(x, y, options = {}) {
     const extraBursts = Math.max(getPerformanceProfile().rainBursts, 2);
     for (let index = 0; index < extraBursts; index += 1) {
       const point = nextDistributedPoint();
-      window.setTimeout(() => {
-        if (canInteractWithGameplay()) {
-          spawnBurst(
-            clamp(point.x, 36, window.innerWidth - 36),
-            clamp(point.y - randomBetween(70, 190), 24, Math.max(window.innerHeight * 0.58, 90)),
-            {
-              sizeMultiplier: 0.82 + Math.random() * 0.24,
-              variant: "rain"
-            }
-          );
-        }
+      scheduleVisualEffectTask(() => {
+        spawnBurst(
+          clamp(point.x, 36, window.innerWidth - 36),
+          clamp(point.y - randomBetween(70, 190), 24, Math.max(window.innerHeight * 0.58, 90)),
+          {
+            sizeMultiplier: 0.82 + Math.random() * 0.24,
+            variant: "rain"
+          }
+        );
       }, 420 * (index + 1));
     }
     return;
@@ -1299,15 +1312,13 @@ function triggerPlayModeBursts(x, y, options = {}) {
   if (state.visualMode === "giant") {
     spawnBurst(primaryX, primaryY, { sizeMultiplier: 1.85 });
     if (getResolvedPerformanceMode() === "normal") {
-      window.setTimeout(() => {
-        if (canInteractWithGameplay()) {
-          const point = nextDistributedPoint();
-          spawnBurst(
-            clamp(point.x + randomBetween(-36, 36), 40, window.innerWidth - 40),
-            clamp(point.y + randomBetween(-32, 32), 40, window.innerHeight - 40),
-            { sizeMultiplier: 1.2 }
-          );
-        }
+      scheduleVisualEffectTask(() => {
+        const point = nextDistributedPoint();
+        spawnBurst(
+          clamp(point.x + randomBetween(-36, 36), 40, window.innerWidth - 40),
+          clamp(point.y + randomBetween(-32, 32), 40, window.innerHeight - 40),
+          { sizeMultiplier: 1.2 }
+        );
       }, 90);
     }
     return;
@@ -1339,6 +1350,7 @@ function resetHint() {
 }
 
 function clearBursts() {
+  clearVisualEffectTasks();
   emojiStage.replaceChildren();
   burstCount = 0;
 }
@@ -1855,6 +1867,7 @@ function stopAllInteractiveInput() {
   resetPointerTrail();
   clearMenuReturnCombo();
   clearIdleNudge();
+  clearVisualEffectTasks();
 }
 
 async function requestScreenWakeLock() {
