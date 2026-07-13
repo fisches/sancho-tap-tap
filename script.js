@@ -1712,11 +1712,19 @@ function handleParentKeydown(event) {
 }
 
 function updateParentActions() {
+  const canExitFullscreen = Boolean(document.fullscreenElement);
   parentResumeAction.hidden = state.isSessionLocked;
-  parentExitAction.hidden = !document.fullscreenElement;
+  parentExitAction.hidden = !canExitFullscreen;
   parentTitle.textContent = state.isSessionLocked ? "partie terminee" : "sortie protegee";
-  parentText.textContent = state.isSessionLocked
-    ? "relance une partie ou retourne au menu."
+  if (state.isSessionLocked) {
+    parentText.textContent = canExitFullscreen
+      ? "relance, retourne au menu ou quitte le plein ecran."
+      : "relance une partie ou retourne au menu.";
+    return;
+  }
+
+  parentText.textContent = canExitFullscreen
+    ? "reprends, relance, retourne au menu ou quitte le plein ecran."
     : "reprends, relance ou retourne au menu.";
 }
 
