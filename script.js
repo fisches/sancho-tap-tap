@@ -2801,7 +2801,7 @@ function handleGamepadDisconnected(event) {
 
 function handleVisibilityChange() {
   if (document.hidden) {
-    pauseForInterruption("petite pause", "reviens en plein ecran pour continuer la partie.");
+    pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
     return;
   }
 
@@ -2813,7 +2813,7 @@ function handleVisibilityChange() {
 function handleWindowBlur() {
   releaseScreenWakeLock();
   releaseAllKeys();
-  pauseForInterruption("petite pause", "reviens en plein ecran pour continuer la partie.");
+  pauseForInterruption("petite pause", "retouche l'ecran pour reprendre la partie.");
 }
 
 function handleFullscreenChange() {
