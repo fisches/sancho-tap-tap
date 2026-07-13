@@ -473,6 +473,7 @@ button {
   opacity: 0.76;
   transform: scale(1.03);
   background: var(--ui-glass-strong);
+  padding-inline: 0.74rem;
 }
 
 .playground.is-session-locked .parent-hotspot {
@@ -2019,6 +2020,10 @@ button {
     left: max(0.55rem, env(safe-area-inset-left));
     padding: 0.42rem 0.6rem;
     font-size: 0.58rem;
+  }
+
+  .playground.is-playing .parent-hotspot.is-armed {
+    padding-inline: 0.66rem;
   }
 
   .playground.is-session-locked .parent-hotspot {

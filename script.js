@@ -1651,7 +1651,7 @@ function handleParentHotspotClick(event) {
 
   parentHotspotArmed = true;
   parentHotspot.classList.add("is-armed");
-  parentHotspot.textContent = "encore";
+  parentHotspot.textContent = "confirmer";
   parentHotspot.setAttribute("aria-label", "Confirmer options parent");
   parentHotspotTimeoutId = window.setTimeout(resetParentHotspotArm, parentHotspotConfirmMs);
 }
@@ -1668,7 +1668,7 @@ function handleLockParentAction(event) {
 
   lockParentActionArmed = true;
   lockParentAction.classList.add("is-armed");
-  lockParentAction.textContent = "encore";
+  lockParentAction.textContent = "confirmer";
   lockParentAction.setAttribute("aria-label", "Confirmer options parent");
   lockParentActionTimeoutId = window.setTimeout(resetLockParentActionArm, parentHotspotConfirmMs);
 }
