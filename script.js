@@ -170,8 +170,8 @@ const energyConfigs = {
   }
 };
 const soundConfigs = {
-  off: { volume: 0 },
-  soft: { volume: 0.16 }
+  off: { volume: 0, haptics: false },
+  soft: { volume: 0.16, haptics: true }
 };
 const defaultTimerMode = "10";
 const timerLabels = {
@@ -574,6 +574,10 @@ function playTapSound() {
 }
 
 function playHaptic(pattern, minIntervalMs = 120, options = {}) {
+  if (!getSoundConfig().haptics) {
+    return false;
+  }
+
   if (typeof navigator.vibrate !== "function") {
     return false;
   }
@@ -601,6 +605,12 @@ function playSpecialHaptic() {
 
 function playEndingHaptic() {
   playHaptic([14, 45, 24], 650);
+}
+
+function cancelHaptics() {
+  if (typeof navigator.vibrate === "function") {
+    navigator.vibrate(0);
+  }
 }
 
 function playFinalTimerSound() {
@@ -3020,6 +3030,7 @@ function handleOptionClick(event) {
       playTone(880, 0.07, 0.1, 0.28, "triangle");
     } else {
       suspendAudioContext();
+      cancelHaptics();
     }
   }
 
