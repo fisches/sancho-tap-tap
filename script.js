@@ -1581,11 +1581,35 @@ function resetPointerCoverage() {
   resetPointerTrail();
 }
 
+function capturePointerSafely(target, pointerId) {
+  if (!target?.setPointerCapture) {
+    return;
+  }
+
+  try {
+    target.setPointerCapture(pointerId);
+  } catch (error) {
+    // Pointer capture is opportunistic; some browsers reject stale or synthetic pointers.
+  }
+}
+
+function releasePointerCaptureSafely(target, pointerId) {
+  if (!target?.releasePointerCapture) {
+    return;
+  }
+
+  try {
+    if (!target.hasPointerCapture || target.hasPointerCapture(pointerId)) {
+      target.releasePointerCapture(pointerId);
+    }
+  } catch (error) {
+    // The pointer may already be gone after cancellation, navigation, or focus loss.
+  }
+}
+
 function resetPointerTrail() {
   activePointerTrails.forEach((_, pointerId) => {
-    if (playground.hasPointerCapture?.(pointerId)) {
-      playground.releasePointerCapture?.(pointerId);
-    }
+    releasePointerCaptureSafely(playground, pointerId);
   });
   activePointerTrails.clear();
 }
@@ -2736,7 +2760,7 @@ function handlePointer(event) {
   }
 
   event.preventDefault();
-  event.currentTarget.setPointerCapture?.(event.pointerId);
+  capturePointerSafely(event.currentTarget, event.pointerId);
   const pointX = event.clientX;
   const pointY = event.clientY;
   activePointerTrails.set(event.pointerId, {
@@ -2794,9 +2818,7 @@ function handlePointerTrail(event) {
 }
 
 function handlePointerTrailEnd(event) {
-  if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
-  }
+  releasePointerCaptureSafely(event.currentTarget, event.pointerId);
   activePointerTrails.delete(event.pointerId);
 }
 
