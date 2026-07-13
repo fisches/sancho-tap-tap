@@ -296,6 +296,7 @@ let visualEffectTaskIds = [];
 let idleNudgeTimeoutId = null;
 let screenWakeLock = null;
 let screenWakeLockReleaseWanted = false;
+let storagePersistRequested = false;
 let lastGameplayActivityAt = 0;
 let idleNudgeCount = 0;
 let distributedPointCursor = Math.floor(Math.random() * distributedPointCells.length);
@@ -408,6 +409,22 @@ function persistSettings() {
     );
   } catch (error) {
     console.error("Settings save error", error);
+  }
+}
+
+async function requestPersistentStorage() {
+  if (storagePersistRequested || !navigator.storage?.persist) {
+    return;
+  }
+
+  storagePersistRequested = true;
+  try {
+    const alreadyPersistent = await navigator.storage.persisted?.();
+    if (!alreadyPersistent) {
+      await navigator.storage.persist();
+    }
+  } catch (error) {
+    // Persistence is opportunistic; normal browser storage remains sufficient.
   }
 }
 
@@ -2838,6 +2855,7 @@ function pauseForInterruption(title, text, actionLabel = "reprendre") {
 }
 
 async function startGame() {
+  requestPersistentStorage();
   state.fullscreenWanted = typeof document.documentElement.requestFullscreen === "function";
   state.pendingStart = true;
   const enteredFullscreen = await ensureFullscreen();
@@ -2925,10 +2943,12 @@ function primeFirstView() {
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
+    requestPersistentStorage();
     return;
   }
 
   window.addEventListener("load", () => {
+    requestPersistentStorage();
     navigator.serviceWorker.register("./sw.js").catch((error) => {
       console.error("Service worker error", error);
     });
